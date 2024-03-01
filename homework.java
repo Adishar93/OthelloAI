@@ -85,28 +85,23 @@ public class homework {
 
 class MM {
     public static Coordinate alphaBetaSearch(Board b, byte playerColor, byte depth) {
-        UtilityObject uo = maxValue(b, playerColor, depth, Double.MIN_VALUE, Double.MAX_VALUE);
-        if(uo.action == null) {
-            System.out.println("uo.action is null"+uo.utility);
-        }
+        UtilityObject uo = maxValue(b, playerColor, depth, -Double.MAX_VALUE, Double.MAX_VALUE);
         return uo.action;
     }
 
     public static UtilityObject maxValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
         List<Coordinate> children = b.generateValidMoves2(playerColor);
         if (children.size() == 0 || depth <= 0) {
-            if(depth>0)
-                System.out.println("Null object being returned"+depth);
             return new UtilityObject(b.utility4(playerColor), null);
         }
         depth--;
-        double maxValue = Double.MIN_VALUE;
+        double maxValue = -Double.MAX_VALUE;
         Coordinate bestChild = null;
+        UtilityObject result = null;
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            UtilityObject result = minValue(newBoard, playerColor, depth, alpha, beta);
+            result = minValue(newBoard, playerColor, depth, alpha, beta);
             if (result.utility > maxValue) {
-                System.out.println("Yes Greater");
                 maxValue = result.utility;
                 bestChild = c;
             }
