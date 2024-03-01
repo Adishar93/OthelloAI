@@ -22,7 +22,7 @@ public class homework {
             float opponentTime = Float.parseFloat(times[1]);
             Board b = new Board(reader);
             long start = System.nanoTime();
-            c = MM.minimaxDecision(b, playerColor, (byte) 4);
+            c = MM.alphaBetaSearch(b, playerColor, (byte) 6);
             long exectime = System.nanoTime() - start;
             double exectimeD = (double) exectime / 1000000000d;
             // System.out.println("Minmax Exec:" + exectimeD);
@@ -84,52 +84,71 @@ public class homework {
 }
 
 class MM {
-    public static Coordinate minimaxDecision(Board b, byte playerColor, byte depth) {
-        List<Coordinate> children = b.generateValidMoves2(playerColor);
-
-        if (children.size() == 1) {
-            return children.get(0);
+    public static Coordinate alphaBetaSearch(Board b, byte playerColor, byte depth) {
+        UtilityObject uo = maxValue(b, playerColor, depth, Double.MIN_VALUE, Double.MAX_VALUE);
+        if(uo.action == null) {
+            System.out.println("uo.action is null"+uo.utility);
         }
+        return uo.action;
+    }
+
+    public static UtilityObject maxValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
+        List<Coordinate> children = b.generateValidMoves2(playerColor);
+        if (children.size() == 0 || depth <= 0) {
+            if(depth>0)
+                System.out.println("Null object being returned"+depth);
+            return new UtilityObject(b.utility4(playerColor), null);
+        }
+        depth--;
         double maxValue = Double.MIN_VALUE;
         Coordinate bestChild = null;
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            double result = minValue(newBoard, playerColor, depth);
-            if (result > maxValue) {
-                maxValue = result;
+            UtilityObject result = minValue(newBoard, playerColor, depth, alpha, beta);
+            if (result.utility > maxValue) {
+                System.out.println("Yes Greater");
+                maxValue = result.utility;
                 bestChild = c;
             }
+            if (maxValue >= beta) {
+                return new UtilityObject(maxValue, bestChild);
+            }
+            alpha = Math.max(alpha, maxValue);
         }
-        return bestChild;
+        return new UtilityObject(maxValue, bestChild);
     }
 
-    public static double maxValue(Board b, byte playerColor, byte depth) {
-        List<Coordinate> children = b.generateValidMoves2(playerColor);
-        if (children.size() == 0 || depth <= 0) {
-            return b.utility4(playerColor);
-        }
-        depth--;
-        double maxValue = Double.MIN_VALUE;
-        for (Coordinate c : children) {
-            Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            Math.max(maxValue, minValue(newBoard, playerColor, depth));
-        }
-        return maxValue;
-    }
-
-    public static double minValue(Board b, byte playerColor, byte depth) {
+    public static UtilityObject minValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
         List<Coordinate> children = b.generateValidMoves2(homework.opponentColor(playerColor));
         if (children.size() == 0 || depth <= 0) {
-            return b.utility4(playerColor);
+            return new UtilityObject(b.utility4(playerColor), null);
         }
         depth--;
         double minValue = Double.MAX_VALUE;
+        Coordinate bestChild = null;
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, homework.opponentColor(playerColor));
-            Math.min(minValue, maxValue(newBoard,
-                    playerColor, depth));
+            UtilityObject result = maxValue(newBoard, playerColor, depth, alpha, beta);
+            if (result.utility < minValue) {
+                minValue = result.utility;
+                bestChild = c;
+            }
+            if (minValue <= alpha) {
+                return new UtilityObject(minValue, bestChild);
+            }
+            beta = Math.min(beta, minValue);
         }
-        return minValue;
+        return new UtilityObject(minValue, bestChild);
+    }
+}
+
+class UtilityObject {
+    double utility;
+    Coordinate action;
+
+    public UtilityObject(double u, Coordinate a) {
+        utility = u;
+        action = a;
     }
 }
 
