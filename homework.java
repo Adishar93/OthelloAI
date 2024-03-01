@@ -90,7 +90,7 @@ class MM {
         if (children.size() == 1) {
             return children.get(0);
         }
-        double maxValue = Double.MIN_VALUE;
+        double maxValue = -Double.MAX_VALUE;
         Coordinate bestChild = null;
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
@@ -109,7 +109,7 @@ class MM {
             return b.utility4(playerColor);
         }
         depth--;
-        double maxValue = Double.MIN_VALUE;
+        double maxValue = -Double.MAX_VALUE;
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
             Math.max(maxValue, minValue(newBoard, playerColor, depth));
