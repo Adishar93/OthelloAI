@@ -1,21 +1,23 @@
 public class MyClass {
     public static void main(String args[]) {
-        int board[][] ={{0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,2,2,0,2,0,0,2,0,0,0},
-                        {0,0,0,1,0,1,0,1,0,0,0,0},
-                        {0,0,0,0,1,1,1,0,0,0,0,0},
-                        {0,0,2,1,1,0,1,1,2,0,0,0},
-                        {0,0,0,0,1,1,1,0,0,0,0,0},
-                        {0,0,0,1,0,1,0,1,0,0,0,0},
-                        {0,0,2,0,0,2,0,0,2,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0},
+        int board[][] ={{0,0,0,0,0,2,0,0,0,0,0,0},
+                        {0,0,0,0,0,1,0,0,0,0,0,0},
+                        {0,0,0,0,0,1,0,0,0,0,0,0},
+                        {0,0,0,0,0,2,0,0,0,0,0,0},
+                        {0,0,0,0,0,1,0,0,0,0,0,0},
+                        {0,0,0,0,0,1,0,0,0,0,0,0},
+                        {0,0,0,0,2,0,2,0,0,0,0,0},
+                        {0,0,0,0,1,1,2,0,0,0,0,0},
+                        {0,0,0,2,0,2,1,0,0,0,0,0},
+                        {0,0,0,0,0,2,0,0,0,0,0,0},
+                        {0,0,0,0,0,1,0,0,0,0,0,0},
                         {0,0,0,0,0,0,0,0,0,0,0,0}};
         int playerColor =2;
-        byte i=5;
-        byte j=3;
-       board[i][j] = playerColor;
+        byte i=6;
+        byte j=5;
+        
+
+        board[i][j] = playerColor;
         // From this position traverse in all 8 directions to update all the hit pieces
         // of the opponent
 
@@ -181,12 +183,15 @@ public class MyClass {
             board[hitI][hitJ] = playerColor;
             hitI++;
             hitJ++;
-    }
-    for(int m=0;m<12;m++) {
+        }
+
+        // System.out.println("Play Moves Get Exec:" + exectimeD);
+
+        for(int m=0;m<12;m++) {
         for(int n=0;n<12;n++) {
             System.out.print(board[m][n]+" ");
         }
         System.out.println();
     }
-}
+    }
 }

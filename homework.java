@@ -4,8 +4,6 @@ import java.util.*;
 public class homework {
     public static void main(String args[]) {
         byte playerColor;
-        // ArrayList<Coordinate> list = new ArrayList<>();
-        // Set<Coordinate> locations = null;
         Coordinate c = null;
         try {
             BufferedReader reader = new BufferedReader(new FileReader("input.txt"));
@@ -25,11 +23,6 @@ public class homework {
             c = MM.alphaBetaSearch(b, playerColor, (byte) 7);
             long exectime = System.nanoTime() - start;
             double exectimeD = (double) exectime / 1000000000d;
-            // System.out.println("Minmax Exec:" + exectimeD);
-            // locations = b.generateValidMoves(playerColor);
-            // for (Coordinate c : locations) {
-            // list.add(c);
-            // }
 
         } catch (Exception e) {
             System.out.println("Error Reading Input");
@@ -40,21 +33,6 @@ public class homework {
             FileWriter file = new FileWriter("output.txt");
             BufferedWriter writer = new BufferedWriter(file);
             String output = null;
-            // if (locations.size() == 1) {
-            // for (Coordinate p : locations) {
-            // output = ((char) ('a' + p.second) + "" + (p.first + 1));
-            // }
-            // } else {
-            // Random r = new Random();
-            // byte[] rb = new byte[1];
-            // r.nextBytes(rb);
-            // while (rb[0] < 0 || rb[0] >= list.size()) {
-            // r.nextBytes(rb);
-            // }
-            // Coordinate generatedLocation = list.get(rb[0]);
-            // output = ((char) ('a' + generatedLocation.second) + "" +
-            // (generatedLocation.first + 1));
-            // }
             output = ((char) ('a' + c.second) + "" + (c.first + 1));
             writer.write(output);
             writer.flush();
@@ -91,22 +69,21 @@ class MM {
 
     public static UtilityObject maxValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
         if (b.isFinalState()) {
-            return new UtilityObject(b.utility(playerColor), null);
+            return new UtilityObject(b.utilityCountPieces(playerColor), null);
         }
-        List<Coordinate> children = b.generateValidMoves2(playerColor);
+        List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0 || depth <= 0) {
             return new UtilityObject(
-                    0.35d * b.utility4(playerColor) + 0.35d * b.utility5(playerColor) + 0.25d * b.utility2(playerColor)
-                            + 0.05d * b.utility(playerColor),
+                    0.4d * b.utilityCornerEvaluation(playerColor) + 0.3d * b.utilityFrontierDiscs(playerColor)
+                            + 0.2d * b.utilityPlayerMobility(playerColor),
                     null);
         }
-        depth--;
         double maxValue = -Double.MAX_VALUE;
         Coordinate bestChild = null;
         UtilityObject result = null;
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            result = minValue(newBoard, playerColor, depth, alpha, beta);
+            result = minValue(newBoard, playerColor, (byte) (depth - 1), alpha, beta);
             if (result.utility > maxValue) {
                 maxValue = result.utility;
                 bestChild = c;
@@ -121,21 +98,20 @@ class MM {
 
     public static UtilityObject minValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
         if (b.isFinalState()) {
-            return new UtilityObject(b.utility(playerColor), null);
+            return new UtilityObject(b.utilityCountPieces(playerColor), null);
         }
-        List<Coordinate> children = b.generateValidMoves2(homework.opponentColor(playerColor));
+        List<Coordinate> children = b.generateValidMoves(homework.opponentColor(playerColor));
         if (children.size() == 0 || depth <= 0) {
             return new UtilityObject(
-                    0.35d * b.utility4(playerColor) + 0.35d * b.utility5(playerColor) + 0.25d * b.utility2(playerColor)
-                            + 0.05d * b.utility(playerColor),
+                    0.4d * b.utilityCornerEvaluation(playerColor) + 0.3d * b.utilityFrontierDiscs(playerColor)
+                            + 0.2d * b.utilityPlayerMobility(playerColor),
                     null);
         }
-        depth--;
         double minValue = Double.MAX_VALUE;
         Coordinate bestChild = null;
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, homework.opponentColor(playerColor));
-            UtilityObject result = maxValue(newBoard, playerColor, depth, alpha, beta);
+            UtilityObject result = maxValue(newBoard, playerColor, (byte) (depth - 1), alpha, beta);
             if (result.utility < minValue) {
                 minValue = result.utility;
                 bestChild = c;
@@ -179,6 +155,8 @@ class Board {
                         board[i][j] = 2;
                     } else if (line.charAt(j) == 'O') {
                         board[i][j] = 1;
+                    } else {
+                        board[i][j] = 0;
                     }
                 }
             }
@@ -377,147 +355,7 @@ class Board {
         return true;
     }
 
-    // public Set<Coordinate> generateValidMoves(byte playerColor) {
-    // long start = System.nanoTime();
-    // Set<Coordinate> locations = new HashSet<>();
-    // for (byte i = 0; i < 12; i++) {
-    // for (byte j = 0; j < 12; j++) {
-    // if (board[i][j] == playerColor) {
-    // // From this position traverse in all 8 directions to determine all possible
-    // // valid moves linked to this piece
-    // // Up
-    // byte k = (byte) (i - 1);
-    // byte countOpponent = 0;
-    // while (k >= 0 && board[k][j] != playerColor) {
-    // if (board[k][j] == 0 && countOpponent == 0) {
-    // break;
-    // } else if (board[k][j] != 0) {
-    // countOpponent++;
-    // } else {
-    // locations.add(new Coordinate(k, j));
-    // break;
-    // }
-    // k -= 1;
-    // }
-
-    // // Down
-    // k = (byte) (i + 1);
-    // countOpponent = 0;
-    // while (k < 12 && board[k][j] != playerColor) {
-    // if (board[k][j] == 0 && countOpponent == 0) {
-    // break;
-    // } else if (board[k][j] != 0) {
-    // countOpponent++;
-    // } else {
-    // locations.add(new Coordinate(k, j));
-    // break;
-    // }
-    // k += 1;
-    // }
-    // // Left
-    // byte l = (byte) (j - 1);
-    // countOpponent = 0;
-    // while (l >= 0 && board[i][l] != playerColor) {
-    // if (board[i][l] == 0 && countOpponent == 0) {
-    // break;
-    // } else if (board[i][l] != 0) {
-    // countOpponent++;
-    // } else {
-    // locations.add(new Coordinate(i, l));
-    // break;
-    // }
-    // l -= 1;
-    // }
-    // // Right
-    // l = (byte) (j + 1);
-    // countOpponent = 0;
-    // while (l < 12 && board[i][l] != playerColor) {
-    // if (board[i][l] == 0 && countOpponent == 0) {
-    // break;
-    // } else if (board[i][l] != 0) {
-    // countOpponent++;
-    // } else {
-    // locations.add(new Coordinate(i, l));
-    // break;
-    // }
-    // l += 1;
-    // }
-    // // Top right diagonal
-    // k = (byte) (i - 1);
-    // l = (byte) (j + 1);
-    // countOpponent = 0;
-    // while (k >= 0 && l < 12 && board[k][l] != playerColor) {
-    // if (board[k][l] == 0 && countOpponent == 0) {
-    // break;
-    // } else if (board[k][l] != 0) {
-    // countOpponent++;
-    // } else {
-    // locations.add(new Coordinate(k, l));
-    // break;
-    // }
-    // k -= 1;
-    // l += 1;
-    // }
-    // // Bottom right diagonal
-    // k = (byte) (i + 1);
-    // l = (byte) (j + 1);
-    // countOpponent = 0;
-    // while (k < 12 && l < 12 && board[k][l] != playerColor) {
-    // if (board[k][l] == 0 && countOpponent == 0) {
-    // break;
-    // } else if (board[k][l] != 0) {
-    // countOpponent++;
-    // } else {
-    // locations.add(new Coordinate(k, l));
-    // break;
-    // }
-    // k += 1;
-    // l += 1;
-    // }
-    // // Bottom left diagonal
-    // k = (byte) (i + 1);
-    // l = (byte) (j - 1);
-    // countOpponent = 0;
-    // while (k < 12 && l >= 0 && board[k][l] != playerColor) {
-    // if (board[k][l] == 0 && countOpponent == 0) {
-    // break;
-    // } else if (board[k][l] != 0) {
-    // countOpponent++;
-    // } else {
-    // locations.add(new Coordinate(k, l));
-    // break;
-    // }
-    // k += 1;
-    // l -= 1;
-    // }
-
-    // // Top left diagonal
-    // k = (byte) (i - 1);
-    // l = (byte) (j - 1);
-    // countOpponent = 0;
-    // while (k >= 0 && l >= 0 && board[k][l] != playerColor) {
-    // if (board[k][l] == 0 && countOpponent == 0) {
-    // break;
-    // } else if (board[k][l] != 0) {
-    // countOpponent++;
-    // } else {
-    // locations.add(new Coordinate(k, l));
-    // break;
-    // }
-    // k -= 1;
-    // l -= 1;
-    // }
-    // }
-    // }
-    // }
-
-    // long exectime = System.nanoTime() - start;
-    // double exectimeD = (double) exectime / 1000000000d;
-    // // System.out.println("Generate Valid Moves Exec:" + exectimeD);
-    // return locations;
-    // }
-
-    public List<Coordinate> generateValidMoves2(byte playerColor) {
+    public List<Coordinate> generateValidMoves(byte playerColor) {
         long start = System.nanoTime();
         List<Coordinate> moves = new ArrayList<>();
         for (byte i = 0; i < 12; i++) {
@@ -662,7 +500,7 @@ class Board {
         return false;
     }
 
-    public double utility(byte playerColor) {
+    public double utilityCountPieces(byte playerColor) {
         double playerCount = countPieces(playerColor);
         double opponentCount = countPieces(homework.opponentColor(playerColor));
         byte buffer = 0;
@@ -690,19 +528,19 @@ class Board {
         return score;
     }
 
-    public double utility2(byte playerColor) {
-        double playerMobility = (double) generateValidMoves2(playerColor).size();
-        double opponentMobility = (double) generateValidMoves2(homework.opponentColor(playerColor)).size();
+    public double utilityPlayerMobility(byte playerColor) {
+        double playerMobility = (double) generateValidMoves(playerColor).size();
+        double opponentMobility = (double) generateValidMoves(homework.opponentColor(playerColor)).size();
         return 100 * (playerMobility - opponentMobility) / (playerMobility + opponentMobility);
     }
 
-    public double openCloseEvaluation(byte playerColor, float closeWeight) {
+    public double openCloseEvaluation(byte playerColor) {
         // Check number of closed for opponent and increment the score based on that
 
         // Horizontal
         double score = 0;
         final float CORNER_PENALTY = -0.0f;
-        float OPPONENT_CLOSE_WEIGHT = closeWeight;
+        final float OPPONENT_CLOSE_WEIGHT = 1.0f;
         final float OPPONENT_OPEN_WEIGHT = 0.4f;
         for (byte i = 0; i < 12; i++) {
             byte startl = 0;
@@ -1021,32 +859,73 @@ class Board {
         return score;
     }
 
-    public double utility4(byte playerColor) {
-        double playerScore = openCloseEvaluation(playerColor, 1);
-        double opponentScore = openCloseEvaluation(homework.opponentColor(playerColor), 1);
+    public double utilityOpenCloseEvaluation(byte playerColor) {
+        double playerScore = openCloseEvaluation(playerColor);
+        double opponentScore = openCloseEvaluation(homework.opponentColor(playerColor));
         return 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
     }
 
-    public double utility5(byte playerColor) {
+    public double utilityCornerEvaluation(byte playerColor) {
         double playerScore = cornerEvaluation(playerColor);
         double opponentScore = cornerEvaluation(homework.opponentColor(playerColor));
         return 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
+    }
+
+    public double utilityFrontierDiscs(byte playerColor) {
+        double playerScore = frontierDiscs(playerColor);
+        double opponentScore = frontierDiscs(homework.opponentColor(playerColor));
+        return 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
+    }
+
+    public double frontierDiscs(byte playerColor) {
+        double score = 1d;
+        for (byte i = 0; i < 12; i++) {
+            for (byte j = 0; j < 12; j++) {
+                if (i != 0 && j != 0 && i != 11 && j != 11 && board[i][j] == playerColor) {
+                    if (board[i - 1][j] == 0) {
+                        score--;
+                    }
+                    if (board[i][j - 1] == 0) {
+                        score--;
+                    }
+                    if (board[i - 1][j - 1] == 0) {
+                        score--;
+                    }
+                    if (board[i + 1][j] == 0) {
+                        score--;
+                    }
+                    if (board[i][j + 1] == 0) {
+                        score--;
+                    }
+                    if (board[i + 1][j + 1] == 0) {
+                        score--;
+                    }
+                    if (board[i + 1][j - 1] == 0) {
+                        score--;
+                    }
+                    if (board[i - 1][j + 1] == 0) {
+                        score--;
+                    }
+                }
+            }
+        }
+        return score;
     }
 
     public double cornerEvaluation(byte playerColor) {
         // Score all corners
         double score = 0d;
         if (board[0][0] == playerColor) {
-            score += 3;
+            score += 5;
         }
         if (board[11][11] == playerColor) {
-            score += 3;
+            score += 5;
         }
         if (board[11][0] == playerColor) {
-            score += 3;
+            score += 5;
         }
         if (board[0][11] == playerColor) {
-            score += 3;
+            score += 5;
         }
 
         byte i = 0;
@@ -1093,64 +972,10 @@ class Board {
 }
 
 class Coordinate {
-    public Byte first, second;
+    public byte first, second;
 
-    public Coordinate(Byte first, Byte second) {
+    public Coordinate(byte first, byte second) {
         this.first = first;
         this.second = second;
     }
-
-    @Override
-    public boolean equals(Object obj) {
-
-        if (obj == this) {
-            return true;
-        }
-
-        if (!(obj instanceof Coordinate)) {
-            return false;
-        }
-
-        Coordinate other = (Coordinate) obj;
-        return Objects.equals(first, other.first) && Objects.equals(second, other.second);
-    }
 }
-
-// // @Override
-// // public int hashCode() {
-// // return Objects.hash(first, second);
-// // }
-// }
-
-// class Pair<T1, T2> {
-
-// public T1 first;
-// public T2 second;
-
-// public Pair(T1 first, T2 second) {
-// this.first = first;
-// this.second = second;
-// }
-
-// @Override
-// public boolean equals(Object obj) {
-
-// if (obj == this) {
-// return true;
-// }
-
-// if (!(obj instanceof Pair)) {
-// return false;
-// }
-
-// Pair<T1, T2> other = (Pair<T1, T2>) obj;
-
-// return Objects.equals(first, other.first) && Objects.equals(second,
-// other.second);
-// }
-
-// @Override
-// public int hashCode() {
-// return Objects.hash(first, second);
-// }
-// }
