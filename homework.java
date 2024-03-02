@@ -22,7 +22,7 @@ public class homework {
             float opponentTime = Float.parseFloat(times[1]);
             Board b = new Board(reader);
             long start = System.nanoTime();
-            c = MM.alphaBetaSearch(b, playerColor, (byte) 6);
+            c = MM.alphaBetaSearch(b, playerColor, (byte) 7);
             long exectime = System.nanoTime() - start;
             double exectimeD = (double) exectime / 1000000000d;
             // System.out.println("Minmax Exec:" + exectimeD);
@@ -90,9 +90,15 @@ class MM {
     }
 
     public static UtilityObject maxValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
+        if (b.isFinalState()) {
+            return new UtilityObject(b.utility(playerColor), null);
+        }
         List<Coordinate> children = b.generateValidMoves2(playerColor);
         if (children.size() == 0 || depth <= 0) {
-            return new UtilityObject(b.utility4(playerColor), null);
+            return new UtilityObject(
+                    0.35d * b.utility4(playerColor) + 0.35d * b.utility5(playerColor) + 0.25d * b.utility2(playerColor)
+                            + 0.05d * b.utility(playerColor),
+                    null);
         }
         depth--;
         double maxValue = -Double.MAX_VALUE;
@@ -114,9 +120,15 @@ class MM {
     }
 
     public static UtilityObject minValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
+        if (b.isFinalState()) {
+            return new UtilityObject(b.utility(playerColor), null);
+        }
         List<Coordinate> children = b.generateValidMoves2(homework.opponentColor(playerColor));
         if (children.size() == 0 || depth <= 0) {
-            return new UtilityObject(b.utility4(playerColor), null);
+            return new UtilityObject(
+                    0.35d * b.utility4(playerColor) + 0.35d * b.utility5(playerColor) + 0.25d * b.utility2(playerColor)
+                            + 0.05d * b.utility(playerColor),
+                    null);
         }
         depth--;
         double minValue = Double.MAX_VALUE;
@@ -354,145 +366,156 @@ class Board {
         return b;
     }
 
-    public Set<Coordinate> generateValidMoves(byte playerColor) {
-        long start = System.nanoTime();
-        Set<Coordinate> locations = new HashSet<>();
+    public boolean isFinalState() {
         for (byte i = 0; i < 12; i++) {
             for (byte j = 0; j < 12; j++) {
-                if (board[i][j] == playerColor) {
-                    // From this position traverse in all 8 directions to determine all possible
-                    // valid moves linked to this piece
-                    // Up
-                    byte k = (byte) (i - 1);
-                    byte countOpponent = 0;
-                    while (k >= 0 && board[k][j] != playerColor) {
-                        if (board[k][j] == 0 && countOpponent == 0) {
-                            break;
-                        } else if (board[k][j] != 0) {
-                            countOpponent++;
-                        } else {
-                            locations.add(new Coordinate(k, j));
-                            break;
-                        }
-                        k -= 1;
-                    }
-
-                    // Down
-                    k = (byte) (i + 1);
-                    countOpponent = 0;
-                    while (k < 12 && board[k][j] != playerColor) {
-                        if (board[k][j] == 0 && countOpponent == 0) {
-                            break;
-                        } else if (board[k][j] != 0) {
-                            countOpponent++;
-                        } else {
-                            locations.add(new Coordinate(k, j));
-                            break;
-                        }
-                        k += 1;
-                    }
-                    // Left
-                    byte l = (byte) (j - 1);
-                    countOpponent = 0;
-                    while (l >= 0 && board[i][l] != playerColor) {
-                        if (board[i][l] == 0 && countOpponent == 0) {
-                            break;
-                        } else if (board[i][l] != 0) {
-                            countOpponent++;
-                        } else {
-                            locations.add(new Coordinate(i, l));
-                            break;
-                        }
-                        l -= 1;
-                    }
-                    // Right
-                    l = (byte) (j + 1);
-                    countOpponent = 0;
-                    while (l < 12 && board[i][l] != playerColor) {
-                        if (board[i][l] == 0 && countOpponent == 0) {
-                            break;
-                        } else if (board[i][l] != 0) {
-                            countOpponent++;
-                        } else {
-                            locations.add(new Coordinate(i, l));
-                            break;
-                        }
-                        l += 1;
-                    }
-                    // Top right diagonal
-                    k = (byte) (i - 1);
-                    l = (byte) (j + 1);
-                    countOpponent = 0;
-                    while (k >= 0 && l < 12 && board[k][l] != playerColor) {
-                        if (board[k][l] == 0 && countOpponent == 0) {
-                            break;
-                        } else if (board[k][l] != 0) {
-                            countOpponent++;
-                        } else {
-                            locations.add(new Coordinate(k, l));
-                            break;
-                        }
-                        k -= 1;
-                        l += 1;
-                    }
-                    // Bottom right diagonal
-                    k = (byte) (i + 1);
-                    l = (byte) (j + 1);
-                    countOpponent = 0;
-                    while (k < 12 && l < 12 && board[k][l] != playerColor) {
-                        if (board[k][l] == 0 && countOpponent == 0) {
-                            break;
-                        } else if (board[k][l] != 0) {
-                            countOpponent++;
-                        } else {
-                            locations.add(new Coordinate(k, l));
-                            break;
-                        }
-                        k += 1;
-                        l += 1;
-                    }
-                    // Bottom left diagonal
-                    k = (byte) (i + 1);
-                    l = (byte) (j - 1);
-                    countOpponent = 0;
-                    while (k < 12 && l >= 0 && board[k][l] != playerColor) {
-                        if (board[k][l] == 0 && countOpponent == 0) {
-                            break;
-                        } else if (board[k][l] != 0) {
-                            countOpponent++;
-                        } else {
-                            locations.add(new Coordinate(k, l));
-                            break;
-                        }
-                        k += 1;
-                        l -= 1;
-                    }
-
-                    // Top left diagonal
-                    k = (byte) (i - 1);
-                    l = (byte) (j - 1);
-                    countOpponent = 0;
-                    while (k >= 0 && l >= 0 && board[k][l] != playerColor) {
-                        if (board[k][l] == 0 && countOpponent == 0) {
-                            break;
-                        } else if (board[k][l] != 0) {
-                            countOpponent++;
-                        } else {
-                            locations.add(new Coordinate(k, l));
-                            break;
-                        }
-                        k -= 1;
-                        l -= 1;
-                    }
+                if (board[i][j] == 0) {
+                    return false;
                 }
             }
         }
-
-        long exectime = System.nanoTime() - start;
-        double exectimeD = (double) exectime / 1000000000d;
-        // System.out.println("Generate Valid Moves Exec:" + exectimeD);
-        return locations;
+        return true;
     }
+
+    // public Set<Coordinate> generateValidMoves(byte playerColor) {
+    // long start = System.nanoTime();
+    // Set<Coordinate> locations = new HashSet<>();
+    // for (byte i = 0; i < 12; i++) {
+    // for (byte j = 0; j < 12; j++) {
+    // if (board[i][j] == playerColor) {
+    // // From this position traverse in all 8 directions to determine all possible
+    // // valid moves linked to this piece
+    // // Up
+    // byte k = (byte) (i - 1);
+    // byte countOpponent = 0;
+    // while (k >= 0 && board[k][j] != playerColor) {
+    // if (board[k][j] == 0 && countOpponent == 0) {
+    // break;
+    // } else if (board[k][j] != 0) {
+    // countOpponent++;
+    // } else {
+    // locations.add(new Coordinate(k, j));
+    // break;
+    // }
+    // k -= 1;
+    // }
+
+    // // Down
+    // k = (byte) (i + 1);
+    // countOpponent = 0;
+    // while (k < 12 && board[k][j] != playerColor) {
+    // if (board[k][j] == 0 && countOpponent == 0) {
+    // break;
+    // } else if (board[k][j] != 0) {
+    // countOpponent++;
+    // } else {
+    // locations.add(new Coordinate(k, j));
+    // break;
+    // }
+    // k += 1;
+    // }
+    // // Left
+    // byte l = (byte) (j - 1);
+    // countOpponent = 0;
+    // while (l >= 0 && board[i][l] != playerColor) {
+    // if (board[i][l] == 0 && countOpponent == 0) {
+    // break;
+    // } else if (board[i][l] != 0) {
+    // countOpponent++;
+    // } else {
+    // locations.add(new Coordinate(i, l));
+    // break;
+    // }
+    // l -= 1;
+    // }
+    // // Right
+    // l = (byte) (j + 1);
+    // countOpponent = 0;
+    // while (l < 12 && board[i][l] != playerColor) {
+    // if (board[i][l] == 0 && countOpponent == 0) {
+    // break;
+    // } else if (board[i][l] != 0) {
+    // countOpponent++;
+    // } else {
+    // locations.add(new Coordinate(i, l));
+    // break;
+    // }
+    // l += 1;
+    // }
+    // // Top right diagonal
+    // k = (byte) (i - 1);
+    // l = (byte) (j + 1);
+    // countOpponent = 0;
+    // while (k >= 0 && l < 12 && board[k][l] != playerColor) {
+    // if (board[k][l] == 0 && countOpponent == 0) {
+    // break;
+    // } else if (board[k][l] != 0) {
+    // countOpponent++;
+    // } else {
+    // locations.add(new Coordinate(k, l));
+    // break;
+    // }
+    // k -= 1;
+    // l += 1;
+    // }
+    // // Bottom right diagonal
+    // k = (byte) (i + 1);
+    // l = (byte) (j + 1);
+    // countOpponent = 0;
+    // while (k < 12 && l < 12 && board[k][l] != playerColor) {
+    // if (board[k][l] == 0 && countOpponent == 0) {
+    // break;
+    // } else if (board[k][l] != 0) {
+    // countOpponent++;
+    // } else {
+    // locations.add(new Coordinate(k, l));
+    // break;
+    // }
+    // k += 1;
+    // l += 1;
+    // }
+    // // Bottom left diagonal
+    // k = (byte) (i + 1);
+    // l = (byte) (j - 1);
+    // countOpponent = 0;
+    // while (k < 12 && l >= 0 && board[k][l] != playerColor) {
+    // if (board[k][l] == 0 && countOpponent == 0) {
+    // break;
+    // } else if (board[k][l] != 0) {
+    // countOpponent++;
+    // } else {
+    // locations.add(new Coordinate(k, l));
+    // break;
+    // }
+    // k += 1;
+    // l -= 1;
+    // }
+
+    // // Top left diagonal
+    // k = (byte) (i - 1);
+    // l = (byte) (j - 1);
+    // countOpponent = 0;
+    // while (k >= 0 && l >= 0 && board[k][l] != playerColor) {
+    // if (board[k][l] == 0 && countOpponent == 0) {
+    // break;
+    // } else if (board[k][l] != 0) {
+    // countOpponent++;
+    // } else {
+    // locations.add(new Coordinate(k, l));
+    // break;
+    // }
+    // k -= 1;
+    // l -= 1;
+    // }
+    // }
+    // }
+    // }
+
+    // long exectime = System.nanoTime() - start;
+    // double exectimeD = (double) exectime / 1000000000d;
+    // // System.out.println("Generate Valid Moves Exec:" + exectimeD);
+    // return locations;
+    // }
 
     public List<Coordinate> generateValidMoves2(byte playerColor) {
         long start = System.nanoTime();
@@ -639,11 +662,23 @@ class Board {
         return false;
     }
 
-    public int utility(byte playerColor) {
+    public double utility(byte playerColor) {
+        double playerCount = countPieces(playerColor);
+        double opponentCount = countPieces(homework.opponentColor(playerColor));
+        byte buffer = 0;
+        if (playerColor == 2) {
+            buffer = 1;
+        } else {
+            buffer = -1;
+        }
+        return 100 * (playerCount - opponentCount + buffer) / (playerCount + opponentCount + Math.abs(buffer));
+    }
+
+    public double countPieces(byte playerColor) {
         long start = System.nanoTime();
-        int score = 0;
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[0].length; j++) {
+        double score = 0d;
+        for (byte i = 0; i < 12; i++) {
+            for (byte j = 0; j < 12; j++) {
                 if (board[i][j] == playerColor) {
                     score++;
                 }
@@ -655,18 +690,20 @@ class Board {
         return score;
     }
 
-    public int utility2(byte playerColor) {
-        return generateValidMoves2(playerColor).size();
+    public double utility2(byte playerColor) {
+        double playerMobility = (double) generateValidMoves2(playerColor).size();
+        double opponentMobility = (double) generateValidMoves2(homework.opponentColor(playerColor)).size();
+        return 100 * (playerMobility - opponentMobility) / (playerMobility + opponentMobility);
     }
 
-    public double utility3(byte playerColor, float closeWeight) {
+    public double openCloseEvaluation(byte playerColor, float closeWeight) {
         // Check number of closed for opponent and increment the score based on that
 
         // Horizontal
         double score = 0;
-        final float CORNER_PENALTY = -0.4f;
+        final float CORNER_PENALTY = -0.0f;
         float OPPONENT_CLOSE_WEIGHT = closeWeight;
-        final float OPPONENT_OPEN_WEIGHT = 0.5f;
+        final float OPPONENT_OPEN_WEIGHT = 0.4f;
         for (byte i = 0; i < 12; i++) {
             byte startl = 0;
             while (startl < 12) {
@@ -985,11 +1022,66 @@ class Board {
     }
 
     public double utility4(byte playerColor) {
-        double score = 0;
-        /* PLAYER */
-        score += utility3(playerColor, 1);
-        /* OPPONENT */
-        score -= utility3(homework.opponentColor(playerColor), 1.0f);
+        double playerScore = openCloseEvaluation(playerColor, 1);
+        double opponentScore = openCloseEvaluation(homework.opponentColor(playerColor), 1);
+        return 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
+    }
+
+    public double utility5(byte playerColor) {
+        double playerScore = cornerEvaluation(playerColor);
+        double opponentScore = cornerEvaluation(homework.opponentColor(playerColor));
+        return 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
+    }
+
+    public double cornerEvaluation(byte playerColor) {
+        // Score all corners
+        double score = 0d;
+        if (board[0][0] == playerColor) {
+            score += 3;
+        }
+        if (board[11][11] == playerColor) {
+            score += 3;
+        }
+        if (board[11][0] == playerColor) {
+            score += 3;
+        }
+        if (board[0][11] == playerColor) {
+            score += 3;
+        }
+
+        byte i = 0;
+        byte j = 1;
+        while (j <= 11) {
+            if (board[i][j] == playerColor) {
+                score += 1;
+            }
+            j++;
+        }
+        i = 1;
+        j = 0;
+        while (i <= 11) {
+            if (board[i][j] == playerColor) {
+                score += 1;
+            }
+            i++;
+        }
+
+        i = 11;
+        j = 1;
+        while (j <= 11) {
+            if (board[i][j] == playerColor) {
+                score += 1;
+            }
+            j++;
+        }
+        i = 0;
+        j = 11;
+        while (i <= 11) {
+            if (board[i][j] == playerColor) {
+                score += 1;
+            }
+            i++;
+        }
         return score;
     }
 
