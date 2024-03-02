@@ -20,7 +20,7 @@ public class homework {
             float opponentTime = Float.parseFloat(times[1]);
             Board b = new Board(reader);
             long start = System.nanoTime();
-            c = MM.alphaBetaSearch(b, playerColor, (byte) 7);
+            c = MM.alphaBetaSearch(b, playerColor, (byte) 6);
             long exectime = System.nanoTime() - start;
             double exectimeD = (double) exectime / 1000000000d;
 
@@ -68,14 +68,14 @@ class MM {
     }
 
     public static UtilityObject maxValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
-        if (b.isFinalState()) {
-            return new UtilityObject(b.utilityCountPieces(playerColor), null);
-        }
+        // if (b.isFinalState()) {
+        // return new UtilityObject(b.utilityCountPieces(playerColor), null);
+        // }
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0 || depth <= 0) {
             return new UtilityObject(
-                    0.4d * b.utilityCornerEvaluation(playerColor) + 0.3d * b.utilityFrontierDiscs(playerColor)
-                            + 0.2d * b.utilityPlayerMobility(playerColor),
+                    b.utilityCornerEvaluation(playerColor)
+                            + b.utilityFrontierDiscs(playerColor),
                     null);
         }
         double maxValue = -Double.MAX_VALUE;
@@ -97,14 +97,14 @@ class MM {
     }
 
     public static UtilityObject minValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
-        if (b.isFinalState()) {
-            return new UtilityObject(b.utilityCountPieces(playerColor), null);
-        }
+        // if (b.isFinalState()) {
+        // return new UtilityObject(b.utilityCountPieces(playerColor), null);
+        // }
         List<Coordinate> children = b.generateValidMoves(homework.opponentColor(playerColor));
         if (children.size() == 0 || depth <= 0) {
             return new UtilityObject(
-                    0.4d * b.utilityCornerEvaluation(playerColor) + 0.3d * b.utilityFrontierDiscs(playerColor)
-                            + 0.2d * b.utilityPlayerMobility(playerColor),
+                    b.utilityCornerEvaluation(playerColor)
+                            + b.utilityFrontierDiscs(playerColor),
                     null);
         }
         double minValue = Double.MAX_VALUE;
@@ -500,18 +500,6 @@ class Board {
         return false;
     }
 
-    public double utilityCountPieces(byte playerColor) {
-        double playerCount = countPieces(playerColor);
-        double opponentCount = countPieces(homework.opponentColor(playerColor));
-        byte buffer = 0;
-        if (playerColor == 2) {
-            buffer = 1;
-        } else {
-            buffer = -1;
-        }
-        return 100 * (playerCount - opponentCount + buffer) / (playerCount + opponentCount + Math.abs(buffer));
-    }
-
     public double countPieces(byte playerColor) {
         long start = System.nanoTime();
         double score = 0d;
@@ -526,12 +514,6 @@ class Board {
         double exectimeD = (double) exectime / 1000000000d;
         // System.out.println("Utility Exec:" + exectimeD);
         return score;
-    }
-
-    public double utilityPlayerMobility(byte playerColor) {
-        double playerMobility = (double) generateValidMoves(playerColor).size();
-        double opponentMobility = (double) generateValidMoves(homework.opponentColor(playerColor)).size();
-        return 100 * (playerMobility - opponentMobility) / (playerMobility + opponentMobility);
     }
 
     public double openCloseEvaluation(byte playerColor) {
@@ -859,49 +841,89 @@ class Board {
         return score;
     }
 
+    public double utilityCountPieces(byte playerColor) {
+        double playerCount = countPieces(playerColor);
+        double opponentCount = countPieces(homework.opponentColor(playerColor));
+        byte buffer = 0;
+        if (playerColor == 2) {
+            buffer = 1;
+        } else {
+            buffer = -1;
+        }
+        return 100 * (playerCount - opponentCount + buffer) / (playerCount + opponentCount + Math.abs(buffer));
+    }
+
+    public double utilityPlayerMobility(byte playerColor) {
+        double playerMobility = (double) generateValidMoves(playerColor).size();
+        double opponentMobility = (double) generateValidMoves(homework.opponentColor(playerColor)).size();
+        if (playerMobility - opponentMobility > 0) {
+            return 100 * (playerMobility) / (playerMobility + opponentMobility);
+        } else if (playerMobility - opponentMobility < 0) {
+            return -100 * (opponentMobility) / (playerMobility + opponentMobility);
+        } else {
+            return 0;
+        }
+    }
+
     public double utilityOpenCloseEvaluation(byte playerColor) {
         double playerScore = openCloseEvaluation(playerColor);
         double opponentScore = openCloseEvaluation(homework.opponentColor(playerColor));
-        return 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
+        if (playerScore - opponentScore > 0) {
+            return 100 * (playerScore) / (playerScore + opponentScore);
+        } else if (playerScore - opponentScore < 0) {
+            return -100 * (opponentScore) / (playerScore + opponentScore);
+        } else {
+            return 0;
+        }
     }
 
     public double utilityCornerEvaluation(byte playerColor) {
-        double playerScore = cornerEvaluation(playerColor);
-        double opponentScore = cornerEvaluation(homework.opponentColor(playerColor));
-        return 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
+        double playerScore1 = cornerEvaluation(playerColor);
+        double opponentScore1 = cornerEvaluation(homework.opponentColor(playerColor));
+        double playerScore2 = edgeEvaluation(playerColor);
+        double opponentScore2 = edgeEvaluation(homework.opponentColor(playerColor));
+        return 100 * (5 * ((playerScore1 - opponentScore1) / (playerScore1 + opponentScore1))
+                + ((playerScore2 - opponentScore2) / (playerScore2 + opponentScore2)));
     }
 
     public double utilityFrontierDiscs(byte playerColor) {
         double playerScore = frontierDiscs(playerColor);
         double opponentScore = frontierDiscs(homework.opponentColor(playerColor));
-        return 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
+        return 0.5 * 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
     }
 
     public double frontierDiscs(byte playerColor) {
-        double score = 1d;
+        double score = 0d;
         for (byte i = 0; i < 12; i++) {
             for (byte j = 0; j < 12; j++) {
                 if (i != 0 && j != 0 && i != 11 && j != 11 && board[i][j] == playerColor) {
                     if (board[i - 1][j] == 0) {
                         score--;
+                        continue;
                     }
                     if (board[i][j - 1] == 0) {
                         score--;
+                        continue;
                     }
                     if (board[i - 1][j - 1] == 0) {
                         score--;
+                        continue;
                     }
                     if (board[i + 1][j] == 0) {
                         score--;
+                        continue;
                     }
                     if (board[i][j + 1] == 0) {
                         score--;
+                        continue;
                     }
                     if (board[i + 1][j + 1] == 0) {
                         score--;
+                        continue;
                     }
                     if (board[i + 1][j - 1] == 0) {
                         score--;
+                        continue;
                     }
                     if (board[i - 1][j + 1] == 0) {
                         score--;
@@ -916,18 +938,23 @@ class Board {
         // Score all corners
         double score = 0d;
         if (board[0][0] == playerColor) {
-            score += 5;
+            score += 1;
         }
         if (board[11][11] == playerColor) {
-            score += 5;
+            score += 1;
         }
         if (board[11][0] == playerColor) {
-            score += 5;
+            score += 1;
         }
         if (board[0][11] == playerColor) {
-            score += 5;
+            score += 1;
         }
 
+        return score;
+    }
+
+    public double edgeEvaluation(byte playerColor) {
+        double score = 0d;
         byte i = 0;
         byte j = 1;
         while (j <= 11) {
