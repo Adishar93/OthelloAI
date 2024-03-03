@@ -2,9 +2,11 @@ import java.io.*;
 import java.util.*;
 
 public class homework {
+    public static byte globalPlayerColor = 0;
+
     public static void main(String args[]) {
         byte playerColor;
-        Coordinate c = null;
+        UtilityObject result = null;
         try {
             BufferedReader reader = new BufferedReader(new FileReader("input.txt"));
             String color = reader.readLine();
@@ -13,14 +15,14 @@ public class homework {
             } else {
                 playerColor = 1;
             }
-
+            globalPlayerColor = playerColor;
             String time = reader.readLine();
             String[] times = time.split(" ");
             float myTime = Float.parseFloat(times[0]);
             float opponentTime = Float.parseFloat(times[1]);
             Board b = new Board(reader);
             long start = System.nanoTime();
-            c = MM.alphaBetaSearch(b, playerColor, (byte) 6);
+            result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE, Integer.MAX_VALUE, (byte) 8, true);
             long exectime = System.nanoTime() - start;
             double exectimeD = (double) exectime / 1000000000d;
 
@@ -33,7 +35,7 @@ public class homework {
             FileWriter file = new FileWriter("output.txt");
             BufferedWriter writer = new BufferedWriter(file);
             String output = null;
-            output = ((char) ('a' + c.second) + "" + (c.first + 1));
+            output = ((char) ('a' + result.action.second) + "" + (result.action.first + 1));
             writer.write(output);
             writer.flush();
             writer.close();
@@ -62,74 +64,60 @@ public class homework {
 }
 
 class MM {
-    public static Coordinate alphaBetaSearch(Board b, byte playerColor, byte depth) {
-        UtilityObject uo = maxValue(b, playerColor, depth, -Double.MAX_VALUE, Double.MAX_VALUE);
-        return uo.action;
-    }
-
-    public static UtilityObject maxValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
-        // if (b.isFinalState()) {
-        // return new UtilityObject(b.utilityCountPieces(playerColor), null);
-        // }
-        List<Coordinate> children = b.generateValidMoves(playerColor);
-        if (children.size() == 0 || depth <= 0) {
+    public static UtilityObject alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth,
+            boolean maximizingPlayer) {
+        if (depth == 0) {
             return new UtilityObject(
-                    b.utilityCornerEvaluation(playerColor)
-                            + b.utilityFrontierDiscs(playerColor),
-                    null);
+                    b.utilityCornerEvaluation(homework.globalPlayerColor)
+                            + b.utilityFrontierDiscs(homework.globalPlayerColor),
+                    new Coordinate((byte) -1, (byte) -1));
         }
-        double maxValue = -Double.MAX_VALUE;
-        Coordinate bestChild = null;
-        UtilityObject result = null;
+        List<Coordinate> children = b.generateValidMoves(playerColor);
+        if (children.size() == 0) {
+            return new UtilityObject(
+                    b.utilityCornerEvaluation(homework.globalPlayerColor)
+                            + b.utilityFrontierDiscs(homework.globalPlayerColor),
+                    new Coordinate((byte) -1, (byte) -1));
+        }
+        UtilityObject bestChild = maximizingPlayer
+                ? new UtilityObject(Integer.MIN_VALUE, new Coordinate((byte) -1, (byte) -1))
+                : new UtilityObject(Integer.MAX_VALUE, new Coordinate((byte) -1, (byte) -1));
+
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            result = minValue(newBoard, playerColor, (byte) (depth - 1), alpha, beta);
-            if (result.utility > maxValue) {
-                maxValue = result.utility;
-                bestChild = c;
+            UtilityObject uot = alphaBetaSearch(newBoard, homework.opponentColor(playerColor), alpha, beta,
+                    (byte) (depth - 1), !maximizingPlayer);
+            int eval = uot.utility;
+            if (maximizingPlayer) {
+                if (eval > bestChild.utility) {
+                    bestChild.utility = eval;
+                    bestChild.action.first = c.first;
+                    bestChild.action.second = c.second;
+                    alpha = Math.max(alpha, eval);
+                }
+            } else {
+                if (eval < bestChild.utility) {
+                    bestChild.utility = eval;
+                    bestChild.action.first = c.first;
+                    bestChild.action.second = c.second;
+                    beta = Math.min(beta, eval);
+                }
             }
-            if (maxValue >= beta) {
-                return new UtilityObject(maxValue, bestChild);
-            }
-            alpha = Math.max(alpha, maxValue);
-        }
-        return new UtilityObject(maxValue, bestChild);
-    }
 
-    public static UtilityObject minValue(Board b, byte playerColor, byte depth, double alpha, double beta) {
-        // if (b.isFinalState()) {
-        // return new UtilityObject(b.utilityCountPieces(playerColor), null);
-        // }
-        List<Coordinate> children = b.generateValidMoves(homework.opponentColor(playerColor));
-        if (children.size() == 0 || depth <= 0) {
-            return new UtilityObject(
-                    b.utilityCornerEvaluation(playerColor)
-                            + b.utilityFrontierDiscs(playerColor),
-                    null);
-        }
-        double minValue = Double.MAX_VALUE;
-        Coordinate bestChild = null;
-        for (Coordinate c : children) {
-            Board newBoard = b.playMoveGetNewBoard(c.first, c.second, homework.opponentColor(playerColor));
-            UtilityObject result = maxValue(newBoard, playerColor, (byte) (depth - 1), alpha, beta);
-            if (result.utility < minValue) {
-                minValue = result.utility;
-                bestChild = c;
+            if (beta <= alpha) {
+                break;
             }
-            if (minValue <= alpha) {
-                return new UtilityObject(minValue, bestChild);
-            }
-            beta = Math.min(beta, minValue);
         }
-        return new UtilityObject(minValue, bestChild);
+
+        return bestChild;
     }
 }
 
 class UtilityObject {
-    double utility;
+    int utility;
     Coordinate action;
 
-    public UtilityObject(double u, Coordinate a) {
+    public UtilityObject(int u, Coordinate a) {
         utility = u;
         action = a;
     }
@@ -166,180 +154,30 @@ class Board {
     }
 
     public Board playMoveGetNewBoard(byte i, byte j, byte playerColor) {
-        long start = System.nanoTime();
+        int[][] direction = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, 1 }, { 1, 1 }, { 1, -1 }, { -1, -1 } };
         Board b = new Board();
         b.board = homework.copy2darray(this.board);
         b.board[i][j] = playerColor;
         // From this position traverse in all 8 directions to update all the hit pieces
         // of the opponent
-
-        // Up
-        byte k = (byte) (i - 1);
-        byte hitI = i;
-        byte hitJ = j;
-        while (k >= 0 && board[k][j] != 0) {
-            if (board[k][j] == playerColor) {
-                hitI = k;
-                hitJ = j;
-                break;
+        for (int m = 0; m < direction.length; m++) {
+            byte k = (byte) (i + direction[m][0]);
+            byte l = (byte) (j + direction[m][1]);
+            while (k >= 0 && k < 12 && l >= 0 && l < 12 && b.board[k][l] == homework.opponentColor(playerColor)) {
+                k += direction[m][0];
+                l += direction[m][1];
             }
-            k -= 1;
-        }
-
-        // Up Update all opponent pieces
-        while (hitI <= i) {
-            board[hitI][hitJ] = playerColor;
-            hitI++;
-        }
-
-        // Down
-        k = (byte) (i + 1);
-        hitI = i;
-        hitJ = j;
-        while (k < 12 && board[k][j] != 0) {
-            if (board[k][j] == playerColor) {
-                hitI = k;
-                hitJ = j;
-                break;
+            if (k >= 0 && k < 12 && l >= 0 && l < 12 && b.board[k][l] == playerColor) {
+                // Found a black on border, need to flip opponent pieces till that position
+                k = (byte) (i + direction[m][0]);
+                l = (byte) (j + direction[m][1]);
+                while (b.board[k][l] == homework.opponentColor(playerColor)) {
+                    b.board[k][l] = playerColor;
+                    k += direction[m][0];
+                    l += direction[m][1];
+                }
             }
-            k += 1;
         }
-
-        // Down Update all opponent pieces
-        while (hitI >= i) {
-            board[hitI][hitJ] = playerColor;
-            hitI--;
-        }
-
-        // Left
-        byte l = (byte) (j - 1);
-        hitI = i;
-        hitJ = j;
-        while (l >= 0 && board[i][l] != 0) {
-            if (board[i][l] == playerColor) {
-                hitI = i;
-                hitJ = l;
-                break;
-            }
-            l -= 1;
-        }
-
-        // Left Update all opponent pieces
-        while (hitJ <= j) {
-            board[hitI][hitJ] = playerColor;
-            hitJ++;
-        }
-
-        // Right
-        l = (byte) (j + 1);
-        hitI = i;
-        hitJ = j;
-        while (l < 12 && board[i][l] != 0) {
-            if (board[i][l] == playerColor) {
-                hitI = i;
-                hitJ = l;
-                break;
-            }
-            l += 1;
-        }
-
-        // Right Update all opponent pieces
-        while (hitJ >= j) {
-            board[hitI][hitJ] = playerColor;
-            hitJ--;
-        }
-
-        // Top right diagonal
-        k = (byte) (i - 1);
-        l = (byte) (j + 1);
-        hitI = i;
-        hitJ = j;
-        while (k >= 0 && l < 12 && board[k][l] != 0) {
-            if (board[k][l] == playerColor) {
-                hitI = k;
-                hitJ = l;
-                break;
-            }
-            k -= 1;
-            l += 1;
-        }
-
-        // Top Right Update all opponent pieces
-        while (hitJ >= j) {
-            board[hitI][hitJ] = playerColor;
-            hitI++;
-            hitJ--;
-        }
-
-        // Bottom right diagonal
-        k = (byte) (i + 1);
-        l = (byte) (j + 1);
-        hitI = i;
-        hitJ = j;
-        while (k < 12 && l < 12 && board[k][l] != 0) {
-            if (board[k][l] == playerColor) {
-                hitI = k;
-                hitJ = l;
-                break;
-            }
-            k += 1;
-            l += 1;
-        }
-
-        // Bottom Right Update all opponent pieces
-        while (hitJ >= j) {
-            board[hitI][hitJ] = playerColor;
-            hitI--;
-            hitJ--;
-        }
-
-        // Bottom left diagonal
-        k = (byte) (i + 1);
-        l = (byte) (j - 1);
-        hitI = i;
-        hitJ = j;
-        while (k < 12 && l >= 0 && board[k][l] != 0) {
-            if (board[k][l] == playerColor) {
-                hitI = k;
-                hitJ = l;
-                break;
-            }
-            k += 1;
-            l -= 1;
-        }
-
-        // Bottom Left Update all opponent pieces
-        while (hitJ <= j) {
-            board[hitI][hitJ] = playerColor;
-            hitI--;
-            hitJ++;
-        }
-
-        // Top left diagonal
-        k = (byte) (i - 1);
-        l = (byte) (j - 1);
-        hitI = i;
-        hitJ = j;
-        while (k >= 0 && l >= 0 && board[k][l] != 0) {
-            if (board[k][l] == playerColor) {
-                hitI = k;
-                hitJ = l;
-                break;
-            }
-            k -= 1;
-            l -= 1;
-        }
-
-        // Top Left Update all opponent pieces
-        while (hitJ <= j) {
-            board[hitI][hitJ] = playerColor;
-            hitI++;
-            hitJ++;
-        }
-
-        long exectime = System.nanoTime() - start;
-        double exectimeD = (double) exectime / 1000000000d;
-        // System.out.println("Play Moves Get Exec:" + exectimeD);
 
         return b;
     }
@@ -375,128 +213,27 @@ class Board {
         if (board[i][j] != 0) {
             return false;
         }
+        int[][] direction = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, 1 }, { 1, 1 }, { 1, -1 }, { -1, -1 } };
         // From this position traverse in all 8 directions to check if there is a valid
         // situation from this position as the move
         // Up
-        byte k = (byte) (i - 1);
-        byte countOpponent = 0;
-        while (k >= 0 && board[k][j] != 0) {
-            if (board[k][j] == homework.opponentColor(playerColor)) {
-                countOpponent++;
-            } else if (board[k][j] == playerColor) {
-                if (countOpponent > 0)
-                    return true;
-                break;
+        for (int m = 0; m < direction.length; m++) {
+            // Top right diagonal
+            byte k = (byte) (i + direction[m][0]);
+            byte l = (byte) (j + direction[m][1]);
+            byte countOpponent = 0;
+            while (k >= 0 && k < 12 && l >= 0 && l < 12 && board[k][l] != 0) {
+                if (board[k][l] == homework.opponentColor(playerColor)) {
+                    countOpponent++;
+                } else if (board[k][l] == playerColor) {
+                    if (countOpponent > 0)
+                        return true;
+                    break;
+                }
+                k += direction[m][0];
+                l += direction[m][1];
             }
-            k -= 1;
         }
-
-        // Down
-        k = (byte) (i + 1);
-        countOpponent = 0;
-        while (k < 12 && board[k][j] != 0) {
-            if (board[k][j] == homework.opponentColor(playerColor)) {
-                countOpponent++;
-            } else if (board[k][j] == playerColor) {
-                if (countOpponent > 0)
-                    return true;
-                break;
-            }
-            k += 1;
-        }
-
-        // Left
-        byte l = (byte) (j - 1);
-        countOpponent = 0;
-        while (l >= 0 && board[i][l] != 0) {
-            if (board[i][l] == homework.opponentColor(playerColor)) {
-                countOpponent++;
-            } else if (board[i][l] == playerColor) {
-                if (countOpponent > 0)
-                    return true;
-                break;
-            }
-            l -= 1;
-        }
-
-        // Right
-        l = (byte) (j + 1);
-        countOpponent = 0;
-        while (l < 12 && board[i][l] != 0) {
-            if (board[i][l] == homework.opponentColor(playerColor)) {
-                countOpponent++;
-            } else if (board[i][l] == playerColor) {
-                if (countOpponent > 0)
-                    return true;
-                break;
-            }
-            l += 1;
-        }
-
-        // Top right diagonal
-        k = (byte) (i - 1);
-        l = (byte) (j + 1);
-        countOpponent = 0;
-        while (k >= 0 && l < 12 && board[k][l] != 0) {
-            if (board[k][l] == homework.opponentColor(playerColor)) {
-                countOpponent++;
-            } else if (board[k][l] == playerColor) {
-                if (countOpponent > 0)
-                    return true;
-                break;
-            }
-            k -= 1;
-            l += 1;
-        }
-
-        // Bottom right diagonal
-        k = (byte) (i + 1);
-        l = (byte) (j + 1);
-        countOpponent = 0;
-        while (k < 12 && l < 12 && board[k][l] != 0) {
-            if (board[k][l] == homework.opponentColor(playerColor)) {
-                countOpponent++;
-            } else if (board[k][l] == playerColor) {
-                if (countOpponent > 0)
-                    return true;
-                break;
-            }
-            k += 1;
-            l += 1;
-        }
-
-        // Bottom left diagonal
-        k = (byte) (i + 1);
-        l = (byte) (j - 1);
-        countOpponent = 0;
-        while (k < 12 && l >= 0 && board[k][l] != 0) {
-            if (board[k][l] == homework.opponentColor(playerColor)) {
-                countOpponent++;
-            } else if (board[k][l] == playerColor) {
-                if (countOpponent > 0)
-                    return true;
-                break;
-            }
-            k += 1;
-            l -= 1;
-        }
-
-        // Top left diagonal
-        k = (byte) (i - 1);
-        l = (byte) (j - 1);
-        countOpponent = 0;
-        while (k >= 0 && l >= 0 && board[k][l] != 0) {
-            if (board[k][l] == homework.opponentColor(playerColor)) {
-                countOpponent++;
-            } else if (board[k][l] == playerColor) {
-                if (countOpponent > 0)
-                    return true;
-                break;
-            }
-            k -= 1;
-            l -= 1;
-        }
-
         return false;
     }
 
@@ -877,23 +614,22 @@ class Board {
         }
     }
 
-    public double utilityCornerEvaluation(byte playerColor) {
-        double playerScore1 = cornerEvaluation(playerColor);
-        double opponentScore1 = cornerEvaluation(homework.opponentColor(playerColor));
-        double playerScore2 = edgeEvaluation(playerColor);
-        double opponentScore2 = edgeEvaluation(homework.opponentColor(playerColor));
-        return 100 * (5 * ((playerScore1 - opponentScore1) / (playerScore1 + opponentScore1))
-                + ((playerScore2 - opponentScore2) / (playerScore2 + opponentScore2)));
+    public int utilityCornerEvaluation(byte playerColor) {
+        int playerScore1 = cornerEvaluation(playerColor);
+        int opponentScore1 = cornerEvaluation(homework.opponentColor(playerColor));
+        int playerScore2 = edgeEvaluation(playerColor);
+        int opponentScore2 = edgeEvaluation(homework.opponentColor(playerColor));
+        return 50 * (playerScore1 - opponentScore1) + 10 * (playerScore2 - opponentScore2);
     }
 
-    public double utilityFrontierDiscs(byte playerColor) {
-        double playerScore = frontierDiscs(playerColor);
-        double opponentScore = frontierDiscs(homework.opponentColor(playerColor));
-        return 0.5 * 100 * (playerScore - opponentScore) / (playerScore + opponentScore);
+    public int utilityFrontierDiscs(byte playerColor) {
+        int playerScore = frontierDiscs(playerColor);
+        int opponentScore = frontierDiscs(homework.opponentColor(playerColor));
+        return 5 * (playerScore - opponentScore);
     }
 
-    public double frontierDiscs(byte playerColor) {
-        double score = 0d;
+    public int frontierDiscs(byte playerColor) {
+        int score = 0;
         for (byte i = 0; i < 12; i++) {
             for (byte j = 0; j < 12; j++) {
                 if (i != 0 && j != 0 && i != 11 && j != 11 && board[i][j] == playerColor) {
@@ -927,6 +663,7 @@ class Board {
                     }
                     if (board[i - 1][j + 1] == 0) {
                         score--;
+                        continue;
                     }
                 }
             }
@@ -934,9 +671,9 @@ class Board {
         return score;
     }
 
-    public double cornerEvaluation(byte playerColor) {
+    public int cornerEvaluation(byte playerColor) {
         // Score all corners
-        double score = 0d;
+        int score = 0;
         if (board[0][0] == playerColor) {
             score += 1;
         }
@@ -953,8 +690,8 @@ class Board {
         return score;
     }
 
-    public double edgeEvaluation(byte playerColor) {
-        double score = 0d;
+    public int edgeEvaluation(byte playerColor) {
+        int score = 0;
         byte i = 0;
         byte j = 1;
         while (j <= 11) {
