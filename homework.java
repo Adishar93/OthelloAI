@@ -21,7 +21,6 @@ public class homework {
             float myTime = Float.parseFloat(times[0]);
             float opponentTime = Float.parseFloat(times[1]);
             Board b = new Board(reader);
-            long start = System.nanoTime();
             // if(myTime>250) {
             // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
             // Integer.MAX_VALUE, (byte) 11, true);
@@ -38,9 +37,7 @@ public class homework {
             // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
             // Integer.MAX_VALUE, (byte) 5, true);
             // }
-            result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE, Integer.MAX_VALUE, (byte) 2, true);
-            long exectime = System.nanoTime() - start;
-            double exectimeD = (double) exectime / 1000000000d;
+            result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE, Integer.MAX_VALUE, (byte) 4, true);
 
         } catch (Exception e) {
             System.out.println("Error Reading Input");
@@ -162,6 +159,11 @@ class Board {
                     }
                 }
             }
+
+            if (br != null) {
+                br.close();
+            }
+
         } catch (Exception e) {
             System.out.println("Error Reading Input inside Board class" + e.toString());
         }
@@ -251,9 +253,8 @@ class Board {
         return false;
     }
 
-    public double countPieces(byte playerColor) {
-        long start = System.nanoTime();
-        double score = 0d;
+    public int countPieces(byte playerColor) {
+        int score = 0;
         for (byte i = 0; i < 12; i++) {
             for (byte j = 0; j < 12; j++) {
                 if (board[i][j] == playerColor) {
@@ -261,10 +262,18 @@ class Board {
                 }
             }
         }
-        long exectime = System.nanoTime() - start;
-        double exectimeD = (double) exectime / 1000000000d;
-        // System.out.println("Utility Exec:" + exectimeD);
         return score;
+    }
+    public int countTotalPieces() {
+        int count = 0;
+        for (byte i = 0; i < 12; i++) {
+            for (byte j = 0; j < 12; j++) {
+                if (board[i][j] == 1 || board[i][j] == 2) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     public int openCloseEvaluation(byte playerColor) {
@@ -592,28 +601,21 @@ class Board {
         return score;
     }
 
-    public double utilityCountPieces(byte playerColor) {
-        double playerCount = countPieces(playerColor);
-        double opponentCount = countPieces(homework.opponentColor(playerColor));
-        byte buffer = 0;
-        if (playerColor == 2) {
-            buffer = 1;
+    public int utilityCountPieces(byte playerColor) {
+        int playerCount = countPieces(playerColor);
+        int opponentCount = countPieces(homework.opponentColor(playerColor));
+        int result = 4*(playerCount-opponentCount);
+        if(countTotalPieces()<40) {
+            return -result;
         } else {
-            buffer = -1;
+            return result;
         }
-        return 100 * (playerCount - opponentCount + buffer) / (playerCount + opponentCount + Math.abs(buffer));
     }
 
     public int utilityPlayerMobility(byte playerColor) {
         int playerMobility = generateValidMoves(playerColor).size();
         int opponentMobility = generateValidMoves(homework.opponentColor(playerColor)).size();
-        if (playerMobility > opponentMobility) {
-            return 10 * playerMobility;
-        } else if (playerMobility < opponentMobility) {
-            return -10 * opponentMobility;
-        } else {
-            return 0;
-        }
+        return 10*(playerMobility - opponentMobility);
 
     }
 
@@ -629,30 +631,15 @@ class Board {
         int playerScore2 = edgeEvaluation(playerColor);
         int opponentScore2 = edgeEvaluation(homework.opponentColor(playerColor));
         int result = 0;
-        if (playerScore1 > opponentScore1) {
-            result += 50 * playerScore1;
-        } else if (playerScore1 < opponentScore1) {
-            result += -50 * opponentScore1;
-        }
-
-        if (playerScore2 > opponentScore2) {
-            result += 10 * playerScore2;
-        } else if (playerScore2 < opponentScore2) {
-            result += -10 * opponentScore2;
-        }
+        result+= 50*(playerScore1-opponentScore1);
+        result+= 10*(playerScore2-opponentScore2);
         return result;
     }
 
     public int utilityFrontierDiscs(byte playerColor) {
         int playerScore = frontierDiscs(playerColor);
         int opponentScore = frontierDiscs(homework.opponentColor(playerColor));
-        if (playerScore > opponentScore) {
-            return 5 * playerScore;
-        } else if (playerScore < opponentScore) {
-            return -5 * opponentScore;
-        } else {
-            return 0;
-        }
+        return 5*(playerScore - opponentScore);
     }
 
     public int frontierDiscs(byte playerColor) {
