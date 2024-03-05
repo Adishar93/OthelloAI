@@ -6,7 +6,7 @@ public class homework {
 
     public static void main(String args[]) {
         byte playerColor;
-        UtilityObject result = null;
+        Coordinate result = null;
         try {
             BufferedReader reader = new BufferedReader(new FileReader("input.txt"));
             String color = reader.readLine();
@@ -37,7 +37,7 @@ public class homework {
             // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
             // Integer.MAX_VALUE, (byte) 5, true);
             // }
-            result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE, Integer.MAX_VALUE, (byte) 4, true);
+            result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE, Integer.MAX_VALUE, (byte) 5);
 
         } catch (Exception e) {
             System.out.println("Error Reading Input");
@@ -48,7 +48,7 @@ public class homework {
             FileWriter file = new FileWriter("output.txt");
             BufferedWriter writer = new BufferedWriter(file);
             String output = null;
-            output = ((char) ('a' + result.action.second) + "" + (result.action.first + 1));
+            output = ((char) ('a' + result.second) + "" + (result.first + 1));
             writer.write(output);
             writer.flush();
             writer.close();
@@ -69,73 +69,90 @@ public class homework {
     }
 
     public static byte opponentColor(byte playerColor) {
-        if (playerColor == 1) {
-            return 2;
+        switch (playerColor) {
+            case 1:
+                return 2;
+            default:
+                return 1;
         }
-        return 1;
     }
 }
 
 class MM {
-    public static UtilityObject alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth,
-            boolean maximizingPlayer) {
-        if (depth == 0) {
-            return new UtilityObject(
-                    b.utilityCornerEvaluation(homework.globalPlayerColor)
-                            + b.utilityFrontierDiscs(homework.globalPlayerColor),
-                    null);
-        }
+    public static Coordinate alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth) {
         List<Coordinate> children = b.generateValidMoves(playerColor);
-        if (children.size() == 0) {
-            return new UtilityObject(
-                    b.utilityCornerEvaluation(homework.globalPlayerColor)
-                            + b.utilityFrontierDiscs(homework.globalPlayerColor),
-                    null);
-        }
-        UtilityObject bestChild = maximizingPlayer
-                ? new UtilityObject(Integer.MIN_VALUE, null)
-                : new UtilityObject(Integer.MAX_VALUE, null);
-
+        Coordinate bestChild = null;
+        int bestChildUtility = Integer.MIN_VALUE;
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            UtilityObject uot = alphaBetaSearch(newBoard, homework.opponentColor(playerColor), alpha, beta,
-                    (byte) (depth - 1), !maximizingPlayer);
-            int eval = uot.utility;
-            if (maximizingPlayer) {
-                if (eval > bestChild.utility) {
-                    bestChild.utility = eval;
-                    bestChild.action = c;
-                    alpha = Math.max(alpha, eval);
-                }
-            } else {
-                if (eval < bestChild.utility) {
-                    bestChild.utility = eval;
-                    bestChild.action = c;
-                    beta = Math.min(beta, eval);
-                }
+            int childUtility = miniMax(newBoard, homework.opponentColor(playerColor), alpha, beta,
+                    (byte) (depth - 1), false);
+
+            if (childUtility > bestChildUtility) {
+                bestChildUtility = childUtility;
+                bestChild = c;
+                alpha = Math.max(alpha, childUtility);
             }
 
             if (beta <= alpha) {
                 break;
             }
         }
-
         return bestChild;
     }
-}
 
-class UtilityObject {
-    int utility;
-    Coordinate action;
+    public static int miniMax(Board b, byte playerColor, int alpha, int beta, byte depth,
+            boolean maximizingPlayer) {
+        if (depth == 0) {
+            return b.utilityCornerEvaluation(homework.globalPlayerColor)
+                    + b.utilityFrontierDiscs(homework.globalPlayerColor)
+                    + b.utilityCornerCloseness(homework.globalPlayerColor);
+        }
+        List<Coordinate> children = b.generateValidMoves(playerColor);
+        if (children.size() == 0) {
+            return b.utilityCornerEvaluation(homework.globalPlayerColor)
+                    + b.utilityFrontierDiscs(homework.globalPlayerColor)
+                    + b.utilityCornerCloseness(homework.globalPlayerColor);
+        }
+        int bestChildUtility = maximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
-    public UtilityObject(int u, Coordinate a) {
-        utility = u;
-        action = a;
+        for (Coordinate c : children) {
+            Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
+            int childUtility = miniMax(newBoard, homework.opponentColor(playerColor), alpha, beta,
+                    (byte) (depth - 1), !maximizingPlayer);
+            if (maximizingPlayer) {
+                if (childUtility > bestChildUtility) {
+                    bestChildUtility = childUtility;
+                    alpha = Math.max(alpha, childUtility);
+                }
+            } else {
+                if (childUtility < bestChildUtility) {
+                    bestChildUtility = childUtility;
+                    beta = Math.min(beta, childUtility);
+                }
+            }
+            if (beta <= alpha) {
+                break;
+            }
+        }
+
+        return bestChildUtility;
     }
 }
+
+// class UtilityObject {
+// int utility;
+// Coordinate action;
+
+// public UtilityObject(int u, Coordinate a) {
+// utility = u;
+// action = a;
+// }
+// }
 
 class Board {
     byte[][] board;
+    public static final int[][] direction = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, 1 }, { 1, 1 }, { 1, -1 }, { -1, -1 } };
 
     public Board() {
     }
@@ -170,7 +187,6 @@ class Board {
     }
 
     public Board playMoveGetNewBoard(byte i, byte j, byte playerColor) {
-        int[][] direction = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, 1 }, { 1, 1 }, { 1, -1 }, { -1, -1 } };
         Board b = new Board();
         b.board = homework.copy2darray(this.board);
         b.board[i][j] = playerColor;
@@ -229,7 +245,6 @@ class Board {
         if (board[i][j] != 0) {
             return false;
         }
-        int[][] direction = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, 1 }, { 1, 1 }, { 1, -1 }, { -1, -1 } };
         // From this position traverse in all 8 directions to check if there is a valid
         // situation from this position as the move
         // Up
@@ -264,6 +279,7 @@ class Board {
         }
         return score;
     }
+
     public int countTotalPieces() {
         int count = 0;
         for (byte i = 0; i < 12; i++) {
@@ -601,11 +617,80 @@ class Board {
         return score;
     }
 
+    public int utilityCornerCloseness(byte playerColor) {
+        int playerScore = 0;
+        int opponentScore = 0;
+        byte opponentColor = homework.opponentColor(playerColor);
+        if (board[0][0] == 0) {
+            // Top left corner
+            if (board[0][1] == playerColor)
+                playerScore--;
+            else if (board[0][1] == opponentColor)
+                opponentScore--;
+            if (board[1][1] == playerColor)
+                playerScore--;
+            else if (board[1][1] == opponentColor)
+                opponentScore--;
+            if (board[1][0] == playerColor)
+                playerScore--;
+            else if (board[1][0] == opponentColor)
+                opponentScore--;
+        }
+
+        if (board[11][0] == 0) {
+            // Bottom left corner
+            if (board[11][1] == playerColor)
+                playerScore--;
+            else if (board[11][1] == opponentColor)
+                opponentScore--;
+            if (board[10][1] == playerColor)
+                playerScore--;
+            else if (board[10][1] == opponentColor)
+                opponentScore--;
+            if (board[10][0] == playerColor)
+                playerScore--;
+            else if (board[10][0] == opponentColor)
+                opponentScore--;
+        }
+        if (board[0][11] == 0) {
+            // Top Right Corner
+            if (board[0][10] == playerColor)
+                playerScore--;
+            else if (board[0][10] == opponentColor)
+                opponentScore--;
+            if (board[1][10] == playerColor)
+                playerScore--;
+            else if (board[1][10] == opponentColor)
+                opponentScore--;
+            if (board[1][11] == playerColor)
+                playerScore--;
+            else if (board[1][11] == opponentColor)
+                opponentScore--;
+        }
+
+        if (board[11][11] == 0) {
+            // Bottom Right Corner
+            if (board[11][10] == playerColor)
+                playerScore--;
+            else if (board[11][10] == opponentColor)
+                opponentScore--;
+            if (board[10][10] == playerColor)
+                playerScore--;
+            else if (board[10][10] == opponentColor)
+                opponentScore--;
+            if (board[10][11] == playerColor)
+                playerScore--;
+            else if (board[10][11] == opponentColor)
+                opponentScore--;
+        }
+        return 30 * (playerScore - opponentScore);
+    }
+
     public int utilityCountPieces(byte playerColor) {
         int playerCount = countPieces(playerColor);
         int opponentCount = countPieces(homework.opponentColor(playerColor));
-        int result = 4*(playerCount-opponentCount);
-        if(countTotalPieces()<40) {
+        int result = 4 * (playerCount - opponentCount);
+        if (countTotalPieces() < 40) {
             return -result;
         } else {
             return result;
@@ -615,7 +700,7 @@ class Board {
     public int utilityPlayerMobility(byte playerColor) {
         int playerMobility = generateValidMoves(playerColor).size();
         int opponentMobility = generateValidMoves(homework.opponentColor(playerColor)).size();
-        return 10*(playerMobility - opponentMobility);
+        return 10 * (playerMobility - opponentMobility);
 
     }
 
@@ -626,64 +711,41 @@ class Board {
     }
 
     public int utilityCornerEvaluation(byte playerColor) {
-        int playerScore1 = cornerEvaluation(playerColor);
-        int opponentScore1 = cornerEvaluation(homework.opponentColor(playerColor));
-        int playerScore2 = edgeEvaluation(playerColor);
-        int opponentScore2 = edgeEvaluation(homework.opponentColor(playerColor));
-        int result = 0;
-        result+= 50*(playerScore1-opponentScore1);
-        result+= 10*(playerScore2-opponentScore2);
-        return result;
-    }
+        int playerScore1 = 0;
+        int opponentScore1 = 0;
+        byte opponentColor = homework.opponentColor(playerColor);
 
-    public int utilityFrontierDiscs(byte playerColor) {
-        int playerScore = frontierDiscs(playerColor);
-        int opponentScore = frontierDiscs(homework.opponentColor(playerColor));
-        return 5*(playerScore - opponentScore);
-    }
-
-    public int frontierDiscs(byte playerColor) {
-        int score = 0;
-        for (byte i = 1; i < 11; i++) {
-            for (byte j = 1; j < 11; j++) {
-                if (board[i][j] == playerColor) {
-                    if (board[i - 1][j] == 0 || board[i][j - 1] == 0 || board[i - 1][j - 1] == 0 || board[i + 1][j] == 0
-                            || board[i][j + 1] == 0 || board[i + 1][j + 1] == 0 || board[i + 1][j - 1] == 0
-                            || board[i - 1][j + 1] == 0) {
-                        score--;
-                    }
-                }
-            }
-        }
-        return score;
-    }
-
-    public int cornerEvaluation(byte playerColor) {
-        // Score all corners
-        int score = 0;
         if (board[0][0] == playerColor) {
-            score += 1;
+            playerScore1 += 1;
+        } else if (board[0][0] == opponentColor) {
+            opponentScore1 += 1;
         }
         if (board[11][11] == playerColor) {
-            score += 1;
+            playerScore1 += 1;
+        } else if (board[11][11] == opponentColor) {
+            opponentScore1 += 1;
         }
         if (board[11][0] == playerColor) {
-            score += 1;
+            playerScore1 += 1;
+        } else if (board[11][0] == opponentColor) {
+            opponentScore1 += 1;
         }
         if (board[0][11] == playerColor) {
-            score += 1;
+            playerScore1 += 1;
+        } else if (board[0][11] == opponentColor) {
+            opponentScore1 += 1;
         }
 
-        return score;
-    }
+        int playerScore2 = 0;
+        int opponentScore2 = 0;
 
-    public int edgeEvaluation(byte playerColor) {
-        int score = 0;
         byte i = 0;
         byte j = 1;
         while (j < 11) {
             if (board[i][j] == playerColor) {
-                score += 1;
+                playerScore2 += 1;
+            } else if (board[i][j] == opponentColor) {
+                opponentScore2 += 1;
             }
             j++;
         }
@@ -691,7 +753,9 @@ class Board {
         j = 0;
         while (i < 11) {
             if (board[i][j] == playerColor) {
-                score += 1;
+                playerScore2 += 1;
+            } else if (board[i][j] == opponentColor) {
+                opponentScore2 += 1;
             }
             i++;
         }
@@ -700,7 +764,9 @@ class Board {
         j = 1;
         while (j < 11) {
             if (board[i][j] == playerColor) {
-                score += 1;
+                playerScore2 += 1;
+            } else if (board[i][j] == opponentColor) {
+                opponentScore2 += 1;
             }
             j++;
         }
@@ -708,11 +774,36 @@ class Board {
         j = 11;
         while (i < 11) {
             if (board[i][j] == playerColor) {
-                score += 1;
+                playerScore2 += 1;
+            } else if (board[i][j] == opponentColor) {
+                opponentScore2 += 1;
             }
             i++;
         }
-        return score;
+        int result = 0;
+        result += 50 * (playerScore1 - opponentScore1);
+        result += 10 * (playerScore2 - opponentScore2);
+        return result;
+    }
+
+    public int utilityFrontierDiscs(byte playerColor) {
+        int playerScore = 0;
+        int opponentScore = 0;
+        for (byte i = 1; i < 11; i++) {
+            for (byte j = 1; j < 11; j++) {
+                if (board[i][j] != 0) {
+                    if (board[i - 1][j] == 0 || board[i][j - 1] == 0 || board[i - 1][j - 1] == 0 || board[i + 1][j] == 0
+                            || board[i][j + 1] == 0 || board[i + 1][j + 1] == 0 || board[i + 1][j - 1] == 0
+                            || board[i - 1][j + 1] == 0) {
+                        if (board[i][j] == playerColor)
+                            playerScore--;
+                        else
+                            opponentScore--;
+                    }
+                }
+            }
+        }
+        return 5 * (playerScore - opponentScore);
     }
 
     public int fastUtility() {
@@ -724,6 +815,7 @@ class Board {
 
 class Coordinate {
     public byte first, second;
+    int heuristic = 0;
 
     public Coordinate(byte first, byte second) {
         this.first = first;
