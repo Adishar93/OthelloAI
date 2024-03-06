@@ -21,23 +21,33 @@ public class homework {
             float myTime = Float.parseFloat(times[0]);
             float opponentTime = Float.parseFloat(times[1]);
             Board b = new Board(reader);
-            // if(myTime>250) {
+            if (myTime > 250) {
+                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                        Integer.MAX_VALUE, (byte) 9);
+            } else if (myTime > 200) {
+                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                        Integer.MAX_VALUE, (byte) 8);
+            } else if (myTime > 100) {
+                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                        Integer.MAX_VALUE, (byte) 7);
+            } else if (myTime > 80) {
+                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                        Integer.MAX_VALUE, (byte) 6);
+            } else if (myTime > 5) {
+                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                        Integer.MAX_VALUE, (byte) 5);
+            } else if (myTime > 2) {
+                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                        Integer.MAX_VALUE, (byte) 3);
+            } else if (myTime > 0.1f) {
+                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                        Integer.MAX_VALUE, (byte) 1);
+            } else {
+                result = b.generateValidMoves(playerColor).get(0);
+            }
             // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-            // Integer.MAX_VALUE, (byte) 11, true);
-            // } else if(myTime>200) {
-            // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-            // Integer.MAX_VALUE, (byte) 9, true);
-            // } else if(myTime>100) {
-            // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-            // Integer.MAX_VALUE, (byte) 8, true);
-            // } else if(myTime>50) {
-            // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-            // Integer.MAX_VALUE, (byte) 7, true);
-            // } else if(myTime>0) {
-            // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-            // Integer.MAX_VALUE, (byte) 5, true);
-            // }
-            result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE, Integer.MAX_VALUE, (byte) 5);
+            // Integer.MAX_VALUE, (byte) 4);
+            // System.out.println("Nodes visited hw: " + MM.nodesVisited);
 
         } catch (Exception e) {
             System.out.println("Error Reading Input");
@@ -59,11 +69,12 @@ public class homework {
     }
 
     public static byte[][] copy2darray(byte[][] input) {
-        byte[][] copy = new byte[input.length][input[0].length];
-        for (int i = 0; i < input.length; i++) {
-            for (int j = 0; j < input[0].length; j++) {
-                copy[i][j] = input[i][j];
-            }
+        byte[][] copy = new byte[input.length][];
+        for (byte i = 0; i < input.length; i++) {
+            byte[] inputRow = input[i];
+            int rowLen = inputRow.length;
+            copy[i] = new byte[rowLen];
+            System.arraycopy(inputRow, 0, copy[i], 0, rowLen);
         }
         return copy;
     }
@@ -79,10 +90,27 @@ public class homework {
 }
 
 class MM {
+    public static long nodesVisited = 0;
+    public static boolean sort = false;
+
     public static Coordinate alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth) {
+        if (depth >= 8) {
+            sort = true;
+        }
         List<Coordinate> children = b.generateValidMoves(playerColor);
         Coordinate bestChild = null;
         int bestChildUtility = Integer.MIN_VALUE;
+        if (sort) {
+            for (Coordinate c : children) {
+                Board nb = b.playMoveGetNewBoard(c.first, c.second, playerColor);
+                c.heuristic += nb.utilityCornerCloseness(homework.globalPlayerColor);
+                c.heuristic += nb.utilityCornerEvaluation(homework.globalPlayerColor);
+                c.heuristic += nb.utilityFrontierDiscs(homework.globalPlayerColor);
+            }
+            Collections.sort(children, (x, y) -> {
+                return y.heuristic - x.heuristic;
+            });
+        }
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
             int childUtility = miniMax(newBoard, homework.opponentColor(playerColor), alpha, beta,
@@ -93,6 +121,7 @@ class MM {
                 bestChild = c;
                 alpha = Math.max(alpha, childUtility);
             }
+            nodesVisited++;
 
             if (beta <= alpha) {
                 break;
@@ -107,12 +136,35 @@ class MM {
             return b.utilityCornerEvaluation(homework.globalPlayerColor)
                     + b.utilityFrontierDiscs(homework.globalPlayerColor)
                     + b.utilityCornerCloseness(homework.globalPlayerColor);
+
         }
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0) {
+            if (b.generateValidMoves(homework.opponentColor(playerColor)).size() == 0) {
+                // Terminal state reached before depth end, so change heuristic to count
+                return b.utilityCountPieces(homework.globalPlayerColor);
+            }
             return b.utilityCornerEvaluation(homework.globalPlayerColor)
                     + b.utilityFrontierDiscs(homework.globalPlayerColor)
                     + b.utilityCornerCloseness(homework.globalPlayerColor);
+        }
+
+        if (sort) {
+            for (Coordinate c : children) {
+                Board nb = b.playMoveGetNewBoard(c.first, c.second, playerColor);
+                c.heuristic += nb.utilityCornerCloseness(homework.globalPlayerColor);
+                c.heuristic += nb.utilityCornerEvaluation(homework.globalPlayerColor);
+                c.heuristic += nb.utilityFrontierDiscs(homework.globalPlayerColor);
+            }
+            if (maximizingPlayer) {
+                Collections.sort(children, (x, y) -> {
+                    return y.heuristic - x.heuristic;
+                });
+            } else {
+                Collections.sort(children, (x, y) -> {
+                    return x.heuristic - y.heuristic;
+                });
+            }
         }
         int bestChildUtility = maximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
@@ -131,6 +183,7 @@ class MM {
                     beta = Math.min(beta, childUtility);
                 }
             }
+            nodesVisited++;
             if (beta <= alpha) {
                 break;
             }
@@ -152,7 +205,23 @@ class MM {
 
 class Board {
     byte[][] board;
-    public static final int[][] direction = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, 1 }, { 1, 1 }, { 1, -1 }, { -1, -1 } };
+    public static final int[][] direction = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, 1 }, { 1, 1 }, { 1, -1 },
+            { -1, -1 } };
+
+    // public static final int[][] EVALUATION_TABLE = {
+    // { 30, -4, -15, 6, 7, 5, 5, 7, 6, -15, -5, 30 },
+    // { -4, -17, -17, 1, 3, 2, 2, 3, 1, -17, -17, -4 },
+    // { -15, -17, -12, 0, 1, 1, 1, 1, 0, -12, -17, -15 },
+    // { 6, 1, 0, 4, 3, 1, 1, 3, 4, 0, 1, 6 },
+    // { 7, 3, 1, 3, 2, 1, 1, 2, 3, 1, 3, 7 },
+    // { 5, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 5 },
+    // { 5, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 5 },
+    // { 7, 3, 1, 3, 2, 1, 1, 2, 3, 1, 3, 7 },
+    // { 6, 1, 0, 4, 3, 1, 1, 3, 4, 0, 1, 6 },
+    // { -15, -17, -12, 0, 1, 1, 1, 1, 0, -12, -17, -15 },
+    // { -5, -17, -17, 1, 3, 2, 2, 3, 1, -17, -17, -5 },
+    // { 30, -4, -15, 6, 7, 5, 5, 7, 6, -15, -5, 30 }
+    // };
 
     public Board() {
     }
@@ -186,9 +255,31 @@ class Board {
         }
     }
 
+    public boolean checkEdgeCaseBoard() {
+        int countO = 0;
+        int countX = 0;
+        for (int i = 0; i < 12; i++) {
+            for (int j = 0; j < 12; j++) {
+                if (board[i][j] == 2)
+                    countX++;
+                else if (board[i][j] == 1)
+                    countO++;
+            }
+        }
+        if (countX == countO && countX == 6) {
+            if (board[1][2] == 1 && board[2][2] == 1 && board[2][3] == 1 && board[3][2] == 1 && board[3][3] == 1
+                    && board[3][4] == 1) {
+                if (board[7][9] == 2 && board[8][8] == 2 && board[8][9] == 2 && board[9][7] == 2 && board[9][8] == 2
+                        && board[9][9] == 2) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public Board playMoveGetNewBoard(byte i, byte j, byte playerColor) {
-        Board b = new Board();
-        b.board = homework.copy2darray(this.board);
+        Board b = new Board(this);
         b.board[i][j] = playerColor;
         // From this position traverse in all 8 directions to update all the hit pieces
         // of the opponent
@@ -226,8 +317,7 @@ class Board {
     }
 
     public List<Coordinate> generateValidMoves(byte playerColor) {
-        long start = System.nanoTime();
-        List<Coordinate> moves = new ArrayList<>(20);
+        List<Coordinate> moves = new ArrayList<>(40);
         for (byte i = 0; i < 12; i++) {
             for (byte j = 0; j < 12; j++) {
                 if (isValidMove(i, j, playerColor)) {
@@ -235,9 +325,6 @@ class Board {
                 }
             }
         }
-        long exectime = System.nanoTime() - start;
-        double exectimeD = (double) exectime / 1000000000d;
-        // System.out.println("Play Moves Get 2 Exec:" + exectimeD);
         return moves;
     }
 
@@ -268,18 +355,6 @@ class Board {
         return false;
     }
 
-    public int countPieces(byte playerColor) {
-        int score = 0;
-        for (byte i = 0; i < 12; i++) {
-            for (byte j = 0; j < 12; j++) {
-                if (board[i][j] == playerColor) {
-                    score++;
-                }
-            }
-        }
-        return score;
-    }
-
     public int countTotalPieces() {
         int count = 0;
         for (byte i = 0; i < 12; i++) {
@@ -297,9 +372,9 @@ class Board {
 
         // Horizontal
         int score = 0;
-        final int CORNER_PENALTY = 0;
-        final int OPPONENT_CLOSE_WEIGHT = 2;
-        final int OPPONENT_OPEN_WEIGHT = 1;
+        final int CORNER_PENALTY = -1;
+        final int OPPONENT_CLOSE_WEIGHT = 0;
+        final int OPPONENT_OPEN_WEIGHT = 0;
         for (byte i = 0; i < 12; i++) {
             byte startl = 0;
             while (startl < 12) {
@@ -687,15 +762,49 @@ class Board {
     }
 
     public int utilityCountPieces(byte playerColor) {
-        int playerCount = countPieces(playerColor);
-        int opponentCount = countPieces(homework.opponentColor(playerColor));
-        int result = 4 * (playerCount - opponentCount);
-        if (countTotalPieces() < 40) {
-            return -result;
-        } else {
-            return result;
+        int playerCount = 0;
+        int opponentCount = 0;
+        for (byte i = 0; i < 12; i++) {
+            for (byte j = 0; j < 12; j++) {
+                if (board[i][j] == playerColor) {
+                    playerCount++;
+                } else if(board[i][j] == homework.opponentColor(playerColor)) {
+                    opponentCount++;
+                }
+            }
         }
+        int result = (playerCount - opponentCount);
+        if (playerColor == 2) {
+            result += 1;
+        } else {
+            result -= 1;
+        }
+        if (result > 0) {
+            return Integer.MAX_VALUE - 1;
+        } else if (result < 0) {
+            return Integer.MIN_VALUE + 1;
+        }
+        return 0;
     }
+
+    // public int utilityUseEvaluationTable(byte playerColor) {
+    // int score = 0;
+    // for (int i = 0; i < 12; i++) {
+    // for (int j = 0; j < 12; j++) {
+    // if (board[i][j] == playerColor) {
+    // score += EVALUATION_TABLE[i][j];
+    // } else if (board[i][j] == homework.opponentColor(playerColor)) {
+    // score -= EVALUATION_TABLE[i][j];
+    // }
+    // }
+    // }
+    // // if (countTotalPieces() < 40) {
+    // // return -result;
+    // // } else {
+    // // return result;
+    // // }
+    // return score;
+    // }
 
     public int utilityPlayerMobility(byte playerColor) {
         int playerMobility = generateValidMoves(playerColor).size();
@@ -707,7 +816,7 @@ class Board {
     public int utilityOpenCloseEvaluation(byte playerColor) {
         int playerScore = openCloseEvaluation(playerColor);
         int opponentScore = openCloseEvaluation(homework.opponentColor(playerColor));
-        return 30 * (playerScore - opponentScore);
+        return 5 * (playerScore - opponentScore);
     }
 
     public int utilityCornerEvaluation(byte playerColor) {
