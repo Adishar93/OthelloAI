@@ -1,4 +1,4 @@
- import java.io.*;
+import java.io.*;
 import java.util.*;
 
 public class refree {
@@ -21,36 +21,42 @@ public class refree {
     // When flipPieces is true, homework2 plays first 'O' and homework plays second
     // 'X'
     final static boolean flipPieces = true;
+    static float homeworkTime = 300;
+    static float homework2Time = 300;
 
     public static void main(String args[]) {
 
         boolean move1 = false;
         boolean move2 = false;
         int limitDepth = 5;
-        double hw = 0d;
-        double hw2 = 0d;
+        float hw = 0f;
+        float hw2 = 0f;
 
         System.out.println("Initial board state:");
         printBoard();
 
-        while (limitDepth > 0) {
+        while (limitDepth > 0 && homework2Time >0 && homeworkTime>0) {
 
             List<Coordinate> movesPlayer1 = generateValidMoves(1);
             if (movesPlayer1.size() > 0) {
                 move1 = true;
-                setupIOFile(1);
+
                 if (!flipPieces) {
+                    setupIOFile(1, 1);
                     long start = System.nanoTime();
                     homework.main(args);
                     long end = System.nanoTime();
                     System.out.println("Time taken by homework: " + (double) (end - start) / 1000000000d + " seconds");
-                    hw += (double) (end - start) / 1000000000d;
+                    hw += (float) (end - start) / 1000000000f;
+                    homeworkTime -= (float) (end - start) / 1000000000f;
                 } else {
+                    setupIOFile(2, 1);
                     long start = System.nanoTime();
                     homework2.main(args);
                     long end = System.nanoTime();
                     System.out.println("Time taken by homework2: " + (double) (end - start) / 1000000000d + " seconds");
-                    hw2 += (double) (end - start) / 1000000000d;
+                    hw2 += (float) (end - start) / 1000000000f;
+                    homework2Time -= (float) (end - start) / 1000000000f;
                 }
                 boolean valid = readOutputAndUpdateBoard(1, movesPlayer1);
                 if (!valid) {
@@ -63,20 +69,22 @@ public class refree {
             List<Coordinate> movesPlayer2 = generateValidMoves(2);
             if (movesPlayer2.size() > 0) {
                 move2 = true;
-                setupIOFile(2);
-
                 if (!flipPieces) {
+                    setupIOFile(2, 2);
                     long start = System.nanoTime();
                     homework2.main(args);
                     long end = System.nanoTime();
                     System.out.println("Time taken by homework2: " + (double) (end - start) / 1000000000d + " seconds");
-                    hw2 += (double) (end - start) / 1000000000d;
+                    hw2 += (float) (end - start) / 1000000000f;
+                    homework2Time -= (float) (end - start) / 1000000000f;
                 } else {
+                    setupIOFile(1, 2);
                     long start = System.nanoTime();
                     homework.main(args);
                     long end = System.nanoTime();
                     System.out.println("Time taken by homework: " + (double) (end - start) / 1000000000d + " seconds");
-                    hw += (double) (end - start) / 1000000000d;
+                    hw += (float) (end - start) / 1000000000f;
+                    homeworkTime -= (float) (end - start) / 1000000000f;
                 }
 
                 boolean valid = readOutputAndUpdateBoard(2, movesPlayer2);
@@ -170,7 +178,7 @@ public class refree {
         return false;
     }
 
-    public static void setupIOFile(int playerColor) {
+    public static void setupIOFile(int botId, int playerColor) {
         try {
             // Writing output.txt
             FileWriter file = new FileWriter("input.txt");
@@ -183,7 +191,12 @@ public class refree {
                 output.append("X");
 
             output.append("\n");
-            output.append("201 201");
+            if (botId == 1) {
+                output.append(homeworkTime + " " + homework2Time);
+            } else {
+                output.append(homework2Time + " " + homeworkTime);
+            }
+
             output.append("\n");
             for (int i = 0; i < board.length; i++) {
                 for (int j = 0; j < board[0].length; j++) {

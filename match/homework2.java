@@ -45,7 +45,7 @@ public class homework2 {
             // } else {
             // result = b.generateValidMoves(playerColor).get(0);
             // }
-            result = MM2.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE, Integer.MAX_VALUE, (byte) 5);
+            result = MM2.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE, Integer.MAX_VALUE, (byte) 3);
             System.out.println("Nodes visited hw2: " + MM2.nodesVisited);
 
         } catch (Exception e) {
@@ -95,7 +95,7 @@ class MM2 {
             { -1, -1 } };
 
     public static Coordinate alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth) {
-        if (depth >= 8) {
+        if (depth > 12) {
             sort = true;
         }
         List<Coordinate> children = b.generateValidMoves(playerColor);
@@ -107,7 +107,6 @@ class MM2 {
                 Board nb = b.playMoveGetNewBoard(c.first, c.second, playerColor);
                 c.heuristic += nb.utilityCornerCloseness(homework2.globalPlayerColor);
                 c.heuristic += nb.utilityCornerEvaluation(homework2.globalPlayerColor);
-                c.heuristic += nb.utilityFrontierDiscs(homework2.globalPlayerColor);
             }
             Collections.sort(children, (x, y) -> {
                 return y.heuristic - x.heuristic;
@@ -145,25 +144,23 @@ class MM2 {
         // }
         if (depth == 0) {
             return b.utilityCornerEvaluation(homework2.globalPlayerColor)
-                    + utilityFrontierDiscs(b.board, homework2.globalPlayerColor)
+                    + b.utilityFrontierDiscs(homework2.globalPlayerColor)
                     + b.utilityCornerCloseness(homework2.globalPlayerColor);
         }
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0) {
             if (b.generateValidMoves(homework.opponentColor(playerColor)).size() == 0) {
                 // Terminal state reached before depth end, so change heuristic to count
-                return b.utilityCountPieces(homework2.globalPlayerColor);
+                return utilityCountPieces(b.board, homework2.globalPlayerColor);
             }
-            return b.utilityCornerEvaluation(homework2.globalPlayerColor)
-                    + utilityFrontierDiscs(b.board, homework2.globalPlayerColor)
-                    + b.utilityCornerCloseness(homework2.globalPlayerColor);
+            return miniMax(b, homework.opponentColor(playerColor), alpha, beta,
+                    (byte) (depth - 1), !maximizingPlayer);
         }
         if (sort) {
             for (Coordinate c : children) {
                 Board nb = b.playMoveGetNewBoard(c.first, c.second, playerColor);
                 c.heuristic += nb.utilityCornerCloseness(homework2.globalPlayerColor);
                 c.heuristic += nb.utilityCornerEvaluation(homework2.globalPlayerColor);
-                c.heuristic += nb.utilityFrontierDiscs(homework2.globalPlayerColor);
             }
             if (maximizingPlayer) {
                 Collections.sort(children, (x, y) -> {
@@ -278,8 +275,9 @@ class MM2 {
         } else {
             result -= 1;
         }
-        return 5 * result;
+        return 5000 * result;
     }
+
     public static int countPieces(byte[][] board, byte playerColor) {
         int score = 0;
         for (byte i = 0; i < 12; i++) {
