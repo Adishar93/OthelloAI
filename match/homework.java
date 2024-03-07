@@ -52,6 +52,7 @@ public class homework {
                 }
                 // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
                 //         Integer.MAX_VALUE, (byte) 15);
+                // System.out.println("Nodes visited hw: " + MM.nodesVisited);
             }
         } catch (Exception e) {
             System.out.println("Error Reading Input");
@@ -94,8 +95,8 @@ public class homework {
 }
 
 class MM {
+    public static long nodesVisited = 0;
     public static boolean sort = false;
-
 
     public static Coordinate alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth) {
         // if (depth > 12) {
@@ -124,6 +125,7 @@ class MM {
                 bestChild = c;
                 alpha = Math.max(alpha, childUtility);
             }
+            nodesVisited++;
 
             if (beta <= alpha) {
                 break;
@@ -140,7 +142,6 @@ class MM {
                     + b.utilityCornerCloseness(homework.globalPlayerColor);
 
         }
-
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0) {
             if (b.generateValidMoves(homework.opponentColor(playerColor)).size() == 0) {
@@ -185,6 +186,7 @@ class MM {
                     beta = Math.min(beta, childUtility);
                 }
             }
+            nodesVisited++;
             if (beta <= alpha) {
                 break;
             }

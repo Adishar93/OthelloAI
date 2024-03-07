@@ -1,0 +1,14 @@
+X
+210.3277 299.94772
+............
+..O.........
+..OO........
+..OOO....XOO
+........XOOO
+......OOOOXO
+.....OOOOXXO
+.....OXOOXXO
+....OXOOOOXO
+....XOOXOXXO
+...XOOOXXXXO
+..XXXXXXXXXX
