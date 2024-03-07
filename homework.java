@@ -26,10 +26,10 @@ public class homework {
             if (myTime > 199 && homework.globalPlayerColor == 1 && b.startBoard()) {
                 result = new Coordinate((byte) 1, (byte) 2);
             } else {
-                if (myTime > 200) {
+                if (myTime > 240) {
                 result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
                 Integer.MAX_VALUE, (byte) 9);
-                } else if (myTime > 150) {
+                } else if (myTime > 180) {
                 result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
                 Integer.MAX_VALUE, (byte) 8);
                 } else if (myTime > 110) {
@@ -96,7 +96,6 @@ public class homework {
 class MM {
     public static boolean sort = false;
 
-
     public static Coordinate alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth) {
         // if (depth > 12) {
         // sort = true;
@@ -140,7 +139,6 @@ class MM {
                     + b.utilityCornerCloseness(homework.globalPlayerColor);
 
         }
-
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0) {
             if (b.generateValidMoves(homework.opponentColor(playerColor)).size() == 0) {
