@@ -96,6 +96,7 @@ public class homework {
 class MM {
     public static boolean sort = false;
 
+
     public static Coordinate alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth) {
         // if (depth > 12) {
         // sort = true;
@@ -139,6 +140,7 @@ class MM {
                     + b.utilityCornerCloseness(homework.globalPlayerColor);
 
         }
+
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0) {
             if (b.generateValidMoves(homework.opponentColor(playerColor)).size() == 0) {
