@@ -1,7 +1,8 @@
+
 import java.io.*;
 import java.util.*;
 
-public class homework2 {
+public class OthelloAI2 {
     public static byte globalPlayerColor = 0;
 
     public static void main(String args[]) {
@@ -105,8 +106,8 @@ class MM2 {
         if (sort) {
             for (Coordinate c : children) {
                 Board nb = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-                c.heuristic += nb.utilityCornerCloseness(homework2.globalPlayerColor);
-                c.heuristic += nb.utilityCornerEvaluation(homework2.globalPlayerColor);
+                c.heuristic += nb.utilityCornerCloseness(OthelloAI2.globalPlayerColor);
+                c.heuristic += nb.utilityCornerEvaluation(OthelloAI2.globalPlayerColor);
             }
             Collections.sort(children, (x, y) -> {
                 return y.heuristic - x.heuristic;
@@ -115,7 +116,7 @@ class MM2 {
 
         for (Coordinate c : children) {
             Board newBoard = playMoveGetNewBoard(b.board, c.first, c.second, playerColor);
-            int childUtility = miniMax(newBoard, homework.opponentColor(playerColor), alpha, beta,
+            int childUtility = miniMax(newBoard, OthelloAI2.opponentColor(playerColor), alpha, beta,
                     (byte) (depth - 1), false);
 
             if (childUtility > bestChildUtility) {
@@ -136,31 +137,31 @@ class MM2 {
             boolean maximizingPlayer) {
         // //Check if board is a specific format
         // if(b.checkEdgeCaseBoard()) {
-        // if(homework2.globalPlayerColor == 2) {
+        // if(OthelloAI2.globalPlayerColor == 2) {
         // return Integer.MAX_VALUE-1;
         // } else {
         // return Integer.MIN_VALUE+1;
         // }
         // }
         if (depth == 0) {
-            return b.utilityCornerEvaluation(homework2.globalPlayerColor)
-                    + b.utilityFrontierDiscs(homework2.globalPlayerColor)
-                    + b.utilityCornerCloseness(homework2.globalPlayerColor);
+            return b.utilityCornerEvaluation(OthelloAI2.globalPlayerColor)
+                    + b.utilityFrontierDiscs(OthelloAI2.globalPlayerColor)
+                    + b.utilityCornerCloseness(OthelloAI2.globalPlayerColor);
         }
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0) {
-            if (b.generateValidMoves(homework.opponentColor(playerColor)).size() == 0) {
+            if (b.generateValidMoves(OthelloAI2.opponentColor(playerColor)).size() == 0) {
                 // Terminal state reached before depth end, so change heuristic to count
-                return utilityCountPieces(b.board, homework2.globalPlayerColor);
+                return utilityCountPieces(b.board, OthelloAI2.globalPlayerColor);
             }
-            return miniMax(b, homework.opponentColor(playerColor), alpha, beta,
+            return miniMax(b, OthelloAI2.opponentColor(playerColor), alpha, beta,
                     (byte) (depth - 1), !maximizingPlayer);
         }
         if (sort) {
             for (Coordinate c : children) {
                 Board nb = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-                c.heuristic += nb.utilityCornerCloseness(homework2.globalPlayerColor);
-                c.heuristic += nb.utilityCornerEvaluation(homework2.globalPlayerColor);
+                c.heuristic += nb.utilityCornerCloseness(OthelloAI2.globalPlayerColor);
+                c.heuristic += nb.utilityCornerEvaluation(OthelloAI2.globalPlayerColor);
             }
             if (maximizingPlayer) {
                 Collections.sort(children, (x, y) -> {
@@ -177,7 +178,7 @@ class MM2 {
 
         for (Coordinate c : children) {
             Board newBoard = playMoveGetNewBoard(b.board, c.first, c.second, playerColor);
-            int childUtility = miniMax(newBoard, homework.opponentColor(playerColor), alpha, beta,
+            int childUtility = miniMax(newBoard, OthelloAI2.opponentColor(playerColor), alpha, beta,
                     (byte) (depth - 1), !maximizingPlayer);
             if (maximizingPlayer) {
                 if (childUtility > bestChildUtility) {
@@ -201,14 +202,14 @@ class MM2 {
 
     public static Board playMoveGetNewBoard(byte[][] board, byte i, byte j, byte playerColor) {
         Board b = new Board();
-        b.board = homework2.copy2darray(board);
+        b.board = OthelloAI2.copy2darray(board);
         b.board[i][j] = playerColor;
         // From this position traverse in all 8 directions to update all the hit pieces
         // of the opponent
         for (int m = 0; m < direction.length; m++) {
             byte k = (byte) (i + direction[m][0]);
             byte l = (byte) (j + direction[m][1]);
-            while (k >= 0 && k < 12 && l >= 0 && l < 12 && b.board[k][l] == homework.opponentColor(playerColor)) {
+            while (k >= 0 && k < 12 && l >= 0 && l < 12 && b.board[k][l] == OthelloAI2.opponentColor(playerColor)) {
                 k += direction[m][0];
                 l += direction[m][1];
             }
@@ -216,7 +217,7 @@ class MM2 {
                 // Found a black on border, need to flip opponent pieces till that position
                 k = (byte) (i + direction[m][0]);
                 l = (byte) (j + direction[m][1]);
-                while (b.board[k][l] == homework.opponentColor(playerColor)) {
+                while (b.board[k][l] == OthelloAI2.opponentColor(playerColor)) {
                     b.board[k][l] = playerColor;
                     k += direction[m][0];
                     l += direction[m][1];
@@ -252,7 +253,7 @@ class MM2 {
             byte l = (byte) (j + direction[m][1]);
             byte countOpponent = 0;
             while (k >= 0 && k < 12 && l >= 0 && l < 12 && board[k][l] != 0) {
-                if (board[k][l] == homework.opponentColor(playerColor)) {
+                if (board[k][l] == OthelloAI2.opponentColor(playerColor)) {
                     countOpponent++;
                 } else if (board[k][l] == playerColor) {
                     if (countOpponent > 0)
@@ -268,7 +269,7 @@ class MM2 {
 
     public static int utilityCountPieces(byte[][] board, byte playerColor) {
         int playerCount = countPieces(board, playerColor);
-        int opponentCount = countPieces(board, homework.opponentColor(playerColor));
+        int opponentCount = countPieces(board, OthelloAI2.opponentColor(playerColor));
         int result = (playerCount - opponentCount);
         if (playerColor == 2) {
             result += 1;
@@ -293,9 +294,9 @@ class MM2 {
     // public static int utilityCornerEvaluation(Board b, byte playerColor) {
     // int playerScore1 = cornerEvaluation(b.board, playerColor);
     // int opponentScore1 = cornerEvaluation(b.board,
-    // homework.opponentColor(playerColor));
+    // OthelloAI2.opponentColor(playerColor));
     // int playerScore2 = b.edgeEvaluation(playerColor);
-    // int opponentScore2 = b.edgeEvaluation(homework.opponentColor(playerColor));
+    // int opponentScore2 = b.edgeEvaluation(OthelloAI2.opponentColor(playerColor));
     // int result = 0;
     // result += 50 * (playerScore1 - opponentScore1);
     // result += 10 * (playerScore2 - opponentScore2);
@@ -345,7 +346,7 @@ class MM2 {
     // public static int utilityCornerCloseness(byte[][] board, byte playerColor) {
     // int playerScore = cornerCloseness(board, playerColor);
     // int opponentScore = cornerCloseness(board,
-    // homework.opponentColor(playerColor));
+    // OthelloAI2.opponentColor(playerColor));
     // return 30 * (playerScore - opponentScore);
     // }
 
@@ -399,22 +400,22 @@ class MM2 {
 
         if (board[0][0] == playerColor) {
             playerScore1 += 1;
-        } else if (board[0][0] == homework.opponentColor(playerColor)) {
+        } else if (board[0][0] == OthelloAI2.opponentColor(playerColor)) {
             opponentScore1 += 1;
         }
         if (board[11][11] == playerColor) {
             playerScore1 += 1;
-        } else if (board[11][11] == homework.opponentColor(playerColor)) {
+        } else if (board[11][11] == OthelloAI2.opponentColor(playerColor)) {
             opponentScore1 += 1;
         }
         if (board[11][0] == playerColor) {
             playerScore1 += 1;
-        } else if (board[11][0] == homework.opponentColor(playerColor)) {
+        } else if (board[11][0] == OthelloAI2.opponentColor(playerColor)) {
             opponentScore1 += 1;
         }
         if (board[0][11] == playerColor) {
             playerScore1 += 1;
-        } else if (board[0][11] == homework.opponentColor(playerColor)) {
+        } else if (board[0][11] == OthelloAI2.opponentColor(playerColor)) {
             opponentScore1 += 1;
         }
 
@@ -426,7 +427,7 @@ class MM2 {
         while (j < 11) {
             if (board[i][j] == playerColor) {
                 playerScore2 += 1;
-            } else if (board[i][j] == homework.opponentColor(playerColor)) {
+            } else if (board[i][j] == OthelloAI2.opponentColor(playerColor)) {
                 opponentScore2 += 1;
             }
             j++;
@@ -436,7 +437,7 @@ class MM2 {
         while (i < 11) {
             if (board[i][j] == playerColor) {
                 playerScore2 += 1;
-            } else if (board[i][j] == homework.opponentColor(playerColor)) {
+            } else if (board[i][j] == OthelloAI2.opponentColor(playerColor)) {
                 opponentScore2 += 1;
             }
             i++;
@@ -447,7 +448,7 @@ class MM2 {
         while (j < 11) {
             if (board[i][j] == playerColor) {
                 playerScore2 += 1;
-            } else if (board[i][j] == homework.opponentColor(playerColor)) {
+            } else if (board[i][j] == OthelloAI2.opponentColor(playerColor)) {
                 opponentScore2 += 1;
             }
             j++;
@@ -457,7 +458,7 @@ class MM2 {
         while (i < 11) {
             if (board[i][j] == playerColor) {
                 playerScore2 += 1;
-            } else if (board[i][j] == homework.opponentColor(playerColor)) {
+            } else if (board[i][j] == OthelloAI2.opponentColor(playerColor)) {
                 opponentScore2 += 1;
             }
             i++;
@@ -491,7 +492,7 @@ class MM2 {
     public static int utilityCornerCloseness(byte[][] board, byte playerColor) {
         int playerScore = 0;
         int opponentScore = 0;
-        byte opponentColor = homework.opponentColor(playerColor);
+        byte opponentColor = OthelloAI2.opponentColor(playerColor);
         if (board[0][0] == 0) {
             // Top left corner
             if (board[0][1] == playerColor)

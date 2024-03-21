@@ -1,206 +1,5 @@
-import java.io.*;
 import java.util.*;
-
-public class homework {
-    public static byte globalPlayerColor = 0;
-
-    public static void main(String args[]) {
-        byte playerColor;
-        Coordinate result = null;
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader("input.txt"));
-            String color = reader.readLine();
-            if (color.charAt(0) == 'X') {
-                playerColor = 2;
-            } else {
-                playerColor = 1;
-            }
-            homework.globalPlayerColor = playerColor;
-            String time = reader.readLine();
-            String[] times = time.split(" ");
-            float myTime = Float.parseFloat(times[0]);
-            float opponentTime = Float.parseFloat(times[1]);
-            Board b = new Board(reader);
-
-            // Check if board is a specific format
-            if (myTime > 199 && homework.globalPlayerColor == 1 && b.startBoard()) {
-                result = new Coordinate((byte) 1, (byte) 2);
-            } else {
-                if (myTime > 240) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 9);
-                } else if (myTime > 180) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 8);
-                } else if (myTime > 110) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 7);
-                } else if (myTime > 60) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 6);
-                } else if (myTime > 5) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 5);
-                } else if (myTime > 2) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 3);
-                } else if (myTime > 0.5f) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 1);
-                } else {
-                result = b.generateValidMoves(playerColor).get(0);
-                }
-                // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                //         Integer.MAX_VALUE, (byte) 15);
-            }
-        } catch (Exception e) {
-            System.out.println("Error Reading Input");
-            e.printStackTrace(System.out);
-        }
-        try {
-            // Writing output.txt
-            FileWriter file = new FileWriter("output.txt");
-            BufferedWriter writer = new BufferedWriter(file);
-            String output = null;
-            output = ((char) ('a' + result.second) + "" + (result.first + 1));
-            writer.write(output);
-            writer.flush();
-            writer.close();
-        } catch (Exception e) {
-            System.out.println("Error writing to output" + e.toString());
-            e.printStackTrace(System.out);
-        }
-    }
-
-    public static byte[][] copy2darray(byte[][] input) {
-        byte[][] copy = new byte[input.length][];
-        for (byte i = 0; i < input.length; i++) {
-            byte[] inputRow = input[i];
-            int rowLen = inputRow.length;
-            copy[i] = new byte[rowLen];
-            System.arraycopy(inputRow, 0, copy[i], 0, rowLen);
-        }
-        return copy;
-    }
-
-    public static byte opponentColor(byte playerColor) {
-        switch (playerColor) {
-            case 1:
-                return 2;
-            default:
-                return 1;
-        }
-    }
-}
-
-class MM {
-    public static boolean sort = false;
-
-    public static Coordinate alphaBetaSearch(Board b, byte playerColor, int alpha, int beta, byte depth) {
-        // if (depth > 12) {
-        // sort = true;
-        // }
-        List<Coordinate> children = b.generateValidMoves(playerColor);
-        Coordinate bestChild = null;
-        int bestChildUtility = Integer.MIN_VALUE;
-        // if (sort) {
-        // for (Coordinate c : children) {
-        // Board nb = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-        // c.heuristic += nb.utilityCornerCloseness(homework.globalPlayerColor);
-        // c.heuristic += nb.utilityCornerEvaluation(homework.globalPlayerColor);
-        // }
-        // Collections.sort(children, (x, y) -> {
-        // return y.heuristic - x.heuristic;
-        // });
-        // }
-        for (Coordinate c : children) {
-            Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            int childUtility = miniMax(newBoard, homework.opponentColor(playerColor), alpha, beta,
-                    (byte) (depth - 1), false);
-
-            if (childUtility > bestChildUtility) {
-                bestChildUtility = childUtility;
-                bestChild = c;
-                alpha = Math.max(alpha, childUtility);
-            }
-
-            if (beta <= alpha) {
-                break;
-            }
-        }
-        return bestChild;
-    }
-
-    public static int miniMax(Board b, byte playerColor, int alpha, int beta, byte depth,
-            boolean maximizingPlayer) {
-        if (depth == 0) {
-            return b.utilityCornerEvaluation(homework.globalPlayerColor)
-                    + b.utilityFrontierDiscs(homework.globalPlayerColor)
-                    + b.utilityCornerCloseness(homework.globalPlayerColor);
-
-        }
-        List<Coordinate> children = b.generateValidMoves(playerColor);
-        if (children.size() == 0) {
-            if (b.generateValidMoves(homework.opponentColor(playerColor)).size() == 0) {
-                // Terminal state reached before depth end, so change heuristic to count
-                return b.utilityCountPieces(homework.globalPlayerColor);
-            }
-            return b.utilityCornerEvaluation(homework.globalPlayerColor)
-                    + b.utilityFrontierDiscs(homework.globalPlayerColor)
-                    + b.utilityCornerCloseness(homework.globalPlayerColor);
-        }
-
-        // if (sort) {
-        // for (Coordinate c : children) {
-        // Board nb = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-        // c.heuristic += nb.utilityCornerCloseness(homework.globalPlayerColor);
-        // c.heuristic += nb.utilityCornerEvaluation(homework.globalPlayerColor);
-        // }
-        // if (maximizingPlayer) {
-        // Collections.sort(children, (x, y) -> {
-        // return y.heuristic - x.heuristic;
-        // });
-        // } else {
-        // Collections.sort(children, (x, y) -> {
-        // return x.heuristic - y.heuristic;
-        // });
-        // }
-        // }
-        int bestChildUtility = maximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-
-        for (Coordinate c : children) {
-            Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            int childUtility = miniMax(newBoard, homework.opponentColor(playerColor), alpha, beta,
-                    (byte) (depth - 1), !maximizingPlayer);
-            if (maximizingPlayer) {
-                if (childUtility > bestChildUtility) {
-                    bestChildUtility = childUtility;
-                    alpha = Math.max(alpha, childUtility);
-                }
-            } else {
-                if (childUtility < bestChildUtility) {
-                    bestChildUtility = childUtility;
-                    beta = Math.min(beta, childUtility);
-                }
-            }
-            if (beta <= alpha) {
-                break;
-            }
-        }
-
-        return bestChildUtility;
-    }
-}
-
-// class UtilityObject {
-// int utility;
-// Coordinate action;
-
-// public UtilityObject(int u, Coordinate a) {
-// utility = u;
-// action = a;
-// }
-// }
+import java.io.*;
 
 class Board {
     byte[][] board;
@@ -226,7 +25,7 @@ class Board {
     }
 
     public Board(Board b) {
-        this.board = homework.copy2darray(b.board);
+        this.board = OthelloAI.copy2darray(b.board);
     }
 
     public Board(BufferedReader br) {
@@ -284,7 +83,7 @@ class Board {
             byte k = (byte) (i + direction[m][0]);
             byte l = (byte) (j + direction[m][1]);
             // Move till there is opponent color piece found
-            while (k >= 0 && k < 12 && l >= 0 && l < 12 && b.board[k][l] == homework.opponentColor(playerColor)) {
+            while (k >= 0 && k < 12 && l >= 0 && l < 12 && b.board[k][l] == OthelloAI.opponentColor(playerColor)) {
                 k += direction[m][0];
                 l += direction[m][1];
             }
@@ -292,7 +91,7 @@ class Board {
                 // Found a black on border, need to flip opponent pieces till that position
                 k = (byte) (i + direction[m][0]);
                 l = (byte) (j + direction[m][1]);
-                while (b.board[k][l] == homework.opponentColor(playerColor)) {
+                while (b.board[k][l] == OthelloAI.opponentColor(playerColor)) {
                     b.board[k][l] = playerColor;
                     k += direction[m][0];
                     l += direction[m][1];
@@ -370,7 +169,7 @@ class Board {
             byte l = (byte) (j + direction[m][1]);
             byte countOpponent = 0;
             while (k >= 0 && k < 12 && l >= 0 && l < 12 && board[k][l] != 0) {
-                if (board[k][l] == homework.opponentColor(playerColor)) {
+                if (board[k][l] == OthelloAI.opponentColor(playerColor)) {
                     countOpponent++;
                 } else if (board[k][l] == playerColor) {
                     if (countOpponent > 0)
@@ -410,11 +209,11 @@ class Board {
     // byte l = startl;
     // byte startOpp = 0;
     // byte endOpp = 0;
-    // while (l < 12 && board[i][l] != homework.opponentColor(playerColor)) {
+    // while (l < 12 && board[i][l] != OthelloAI.opponentColor(playerColor)) {
     // l++;
     // }
     // startOpp = l;
-    // while (l < 12 && board[i][l] == homework.opponentColor(playerColor)) {
+    // while (l < 12 && board[i][l] == OthelloAI.opponentColor(playerColor)) {
     // l++;
     // }
     // endOpp = l;
@@ -457,11 +256,11 @@ class Board {
     // byte k = startk;
     // byte startOpp = 0;
     // byte endOpp = 0;
-    // while (k < 12 && board[k][j] != homework.opponentColor(playerColor)) {
+    // while (k < 12 && board[k][j] != OthelloAI.opponentColor(playerColor)) {
     // k++;
     // }
     // startOpp = k;
-    // while (k < 12 && board[k][j] == homework.opponentColor(playerColor)) {
+    // while (k < 12 && board[k][j] == OthelloAI.opponentColor(playerColor)) {
     // k++;
     // }
     // endOpp = k;
@@ -508,13 +307,13 @@ class Board {
     // byte startOppl = 0;
     // byte endOppk = 0;
     // byte endOppl = 0;
-    // while (k >= 0 && board[k][l] != homework.opponentColor(playerColor)) {
+    // while (k >= 0 && board[k][l] != OthelloAI.opponentColor(playerColor)) {
     // k--;
     // l++;
     // }
     // startOppk = k;
     // startOppl = l;
-    // while (k >= 0 && board[k][l] == homework.opponentColor(playerColor)) {
+    // while (k >= 0 && board[k][l] == OthelloAI.opponentColor(playerColor)) {
     // k--;
     // l++;
     // }
@@ -564,13 +363,13 @@ class Board {
     // byte startOppl = 0;
     // byte endOppk = 0;
     // byte endOppl = 0;
-    // while (l < 12 && board[k][l] != homework.opponentColor(playerColor)) {
+    // while (l < 12 && board[k][l] != OthelloAI.opponentColor(playerColor)) {
     // k--;
     // l++;
     // }
     // startOppk = k;
     // startOppl = l;
-    // while (l < 12 && board[k][l] == homework.opponentColor(playerColor)) {
+    // while (l < 12 && board[k][l] == OthelloAI.opponentColor(playerColor)) {
     // k--;
     // l++;
     // }
@@ -619,13 +418,13 @@ class Board {
     // byte startOppl = 0;
     // byte endOppk = 0;
     // byte endOppl = 0;
-    // while (k >= 0 && board[k][l] != homework.opponentColor(playerColor)) {
+    // while (k >= 0 && board[k][l] != OthelloAI.opponentColor(playerColor)) {
     // k--;
     // l--;
     // }
     // startOppk = k;
     // startOppl = l;
-    // while (k >= 0 && board[k][l] == homework.opponentColor(playerColor)) {
+    // while (k >= 0 && board[k][l] == OthelloAI.opponentColor(playerColor)) {
     // k--;
     // l--;
     // }
@@ -674,13 +473,13 @@ class Board {
     // byte startOppl = 0;
     // byte endOppk = 0;
     // byte endOppl = 0;
-    // while (l >= 0 && board[k][l] != homework.opponentColor(playerColor)) {
+    // while (l >= 0 && board[k][l] != OthelloAI.opponentColor(playerColor)) {
     // k--;
     // l--;
     // }
     // startOppk = k;
     // startOppl = l;
-    // while (l >= 0 && board[k][l] == homework.opponentColor(playerColor)) {
+    // while (l >= 0 && board[k][l] == OthelloAI.opponentColor(playerColor)) {
     // k--;
     // l--;
     // }
@@ -724,7 +523,7 @@ class Board {
     public int utilityCornerCloseness(byte playerColor) {
         int playerScore = 0;
         int opponentScore = 0;
-        byte opponentColor = homework.opponentColor(playerColor);
+        byte opponentColor = OthelloAI.opponentColor(playerColor);
         if (board[0][0] == 0) {
             // Top left corner
             if (board[0][1] == playerColor)
@@ -797,7 +596,7 @@ class Board {
             for (byte j = 0; j < 12; j++) {
                 if (board[i][j] == playerColor) {
                     playerCount++;
-                } else if (board[i][j] == homework.opponentColor(playerColor)) {
+                } else if (board[i][j] == OthelloAI.opponentColor(playerColor)) {
                     opponentCount++;
                 }
             }
@@ -817,7 +616,7 @@ class Board {
     // for (int j = 0; j < 12; j++) {
     // if (board[i][j] == playerColor) {
     // score += EVALUATION_TABLE[i][j];
-    // } else if (board[i][j] == homework.opponentColor(playerColor)) {
+    // } else if (board[i][j] == OthelloAI.opponentColor(playerColor)) {
     // score -= EVALUATION_TABLE[i][j];
     // }
     // }
@@ -832,21 +631,21 @@ class Board {
 
     public int utilityPlayerMobility(byte playerColor) {
         int playerMobility = generateValidMoves(playerColor).size();
-        int opponentMobility = generateValidMoves(homework.opponentColor(playerColor)).size();
+        int opponentMobility = generateValidMoves(OthelloAI.opponentColor(playerColor)).size();
         return 5 * (playerMobility - opponentMobility);
 
     }
 
     // public int utilityOpenCloseEvaluation(byte playerColor) {
     // int playerScore = openCloseEvaluation(playerColor);
-    // int opponentScore = openCloseEvaluation(homework.opponentColor(playerColor));
+    // int opponentScore = openCloseEvaluation(OthelloAI.opponentColor(playerColor));
     // return 5 * (playerScore - opponentScore);
     // }
 
     public int utilityCornerEvaluation(byte playerColor) {
         int playerScore1 = 0;
         int opponentScore1 = 0;
-        byte opponentColor = homework.opponentColor(playerColor);
+        byte opponentColor = OthelloAI.opponentColor(playerColor);
 
         if (board[0][0] == playerColor) {
             playerScore1 += 1;
@@ -999,7 +798,7 @@ class Board {
     // byte l = (byte) (j + direction[m][1]);
     // // Move till there is opponent color piece found
     // while (k >= 0 && k < 12 && l >= 0 && l < 12 && board[k][l] ==
-    // homework.opponentColor(playerColor)) {
+    // OthelloAI.opponentColor(playerColor)) {
     // k += direction[m][0];
     // l += direction[m][1];
     // }
@@ -1007,7 +806,7 @@ class Board {
     // // Found a black on border, need to flip opponent pieces till that position
     // k = (byte) (i + direction[m][0]);
     // l = (byte) (j + direction[m][1]);
-    // while (board[k][l] == homework.opponentColor(playerColor)) {
+    // while (board[k][l] == OthelloAI.opponentColor(playerColor)) {
     // if (k != 0 && l != 0 && k != 11 && l != 11) {
     // if (board[k - 1][l] == 0 || board[k][l - 1] == 0 || board[k - 1][l - 1] == 0
     // || board[k + 1][l] == 0
@@ -1026,14 +825,4 @@ class Board {
     // return 5 * score;
     // }
 
-}
-
-class Coordinate {
-    public byte first, second;
-    int heuristic = 0;
-
-    public Coordinate(byte first, byte second) {
-        this.first = first;
-        this.second = second;
-    }
 }
