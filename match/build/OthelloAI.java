@@ -27,33 +27,33 @@ public class OthelloAI {
             if (myTime > 199 && OthelloAI.globalPlayerColor == 1 && b.startBoard()) {
                 result = new Coordinate((byte) 1, (byte) 2);
             } else {
-                if (myTime > 200) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 9);
-                } else if (myTime > 150) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 8);
-                } else if (myTime > 110) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 7);
-                } else if (myTime > 60) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 6);
-                } else if (myTime > 5) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 5);
-                } else if (myTime > 2) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 3);
-                } else if (myTime > 0.5f) {
-                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                Integer.MAX_VALUE, (byte) 1);
-                } else {
-                result = b.generateValidMoves(playerColor).get(0);
-                }
+                // if (myTime > 200) {
                 // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                //         Integer.MAX_VALUE, (byte) 15);
-                // System.out.println("Nodes visited hw: " + MM.nodesVisited);
+                // Integer.MAX_VALUE, (byte) 9);
+                // } else if (myTime > 150) {
+                // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                // Integer.MAX_VALUE, (byte) 8);
+                // } else if (myTime > 110) {
+                // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                // Integer.MAX_VALUE, (byte) 7);
+                // } else if (myTime > 60) {
+                // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                // Integer.MAX_VALUE, (byte) 6);
+                // } else if (myTime > 5) {
+                // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                // Integer.MAX_VALUE, (byte) 5);
+                // } else if (myTime > 2) {
+                // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                // Integer.MAX_VALUE, (byte) 3);
+                // } else if (myTime > 0.5f) {
+                // result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                // Integer.MAX_VALUE, (byte) 1);
+                // } else {
+                // result = b.generateValidMoves(playerColor).get(0);
+                // }
+                result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
+                        Integer.MAX_VALUE, (byte) 9);
+                System.out.println("Nodes visited bot1: " + MM.nodesVisited);
             }
         } catch (Exception e) {
             System.out.println("Error Reading Input");
@@ -84,15 +84,6 @@ public class OthelloAI {
         }
         return copy;
     }
-
-    public static byte opponentColor(byte playerColor) {
-        switch (playerColor) {
-            case 1:
-                return 2;
-            default:
-                return 1;
-        }
-    }
 }
 
 class MM {
@@ -118,7 +109,7 @@ class MM {
         // }
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            int childUtility = miniMax(newBoard, OthelloAI.opponentColor(playerColor), alpha, beta,
+            int childUtility = miniMax(newBoard, Utility.opponentColor(playerColor), alpha, beta,
                     (byte) (depth - 1), false);
 
             if (childUtility > bestChildUtility) {
@@ -138,20 +129,20 @@ class MM {
     public static int miniMax(Board b, byte playerColor, int alpha, int beta, byte depth,
             boolean maximizingPlayer) {
         if (depth == 0) {
-            return b.utilityCornerEvaluation(OthelloAI.globalPlayerColor)
-                    + b.utilityFrontierDiscs(OthelloAI.globalPlayerColor)
-                    + b.utilityCornerCloseness(OthelloAI.globalPlayerColor);
+            return HeuristicEvaluators.utilityCornerEvaluation(b, OthelloAI.globalPlayerColor)
+                    + HeuristicEvaluators.utilityFrontierDiscs(b, OthelloAI.globalPlayerColor)
+                    + HeuristicEvaluators.utilityCornerCloseness(b, OthelloAI.globalPlayerColor);
 
         }
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0) {
-            if (b.generateValidMoves(OthelloAI.opponentColor(playerColor)).size() == 0) {
+            if (b.generateValidMoves(Utility.opponentColor(playerColor)).size() == 0) {
                 // Terminal state reached before depth end, so change heuristic to count
-                return b.utilityCountPieces(OthelloAI.globalPlayerColor);
+                return HeuristicEvaluators.utilityCountPieces(b, OthelloAI.globalPlayerColor);
             }
-            return b.utilityCornerEvaluation(OthelloAI.globalPlayerColor)
-                    + b.utilityFrontierDiscs(OthelloAI.globalPlayerColor)
-                    + b.utilityCornerCloseness(OthelloAI.globalPlayerColor);
+            return HeuristicEvaluators.utilityCornerEvaluation(b, OthelloAI.globalPlayerColor)
+                    + HeuristicEvaluators.utilityFrontierDiscs(b, OthelloAI.globalPlayerColor)
+                    + HeuristicEvaluators.utilityCornerCloseness(b, OthelloAI.globalPlayerColor);
         }
 
         // if (sort) {
@@ -174,7 +165,7 @@ class MM {
 
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            int childUtility = miniMax(newBoard, OthelloAI.opponentColor(playerColor), alpha, beta,
+            int childUtility = miniMax(newBoard, Utility.opponentColor(playerColor), alpha, beta,
                     (byte) (depth - 1), !maximizingPlayer);
             if (maximizingPlayer) {
                 if (childUtility > bestChildUtility) {
@@ -197,13 +188,4 @@ class MM {
     }
 }
 
-// class UtilityObject {
-// int utility;
-// Coordinate action;
-
-// public UtilityObject(int u, Coordinate a) {
-// utility = u;
-// action = a;
-// }
-// }
 

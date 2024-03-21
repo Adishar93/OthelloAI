@@ -35,9 +35,10 @@ public class Refree {
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
 
-    // When flipPieces is false, bot1 plays first as 'O' and bot2 plays second as 'X'
-    // When flipPieces is true, bot2 plays first as 'O' and bot1 plays second as 'X'
-    
+    // When flipPieces is false, Bot1 plays first as 'O' and Bot2 plays second as
+    // 'X'
+    // When flipPieces is true, Bot2 plays first as 'O' and Bot1 plays second as 'X'
+
     final static boolean flipPieces = true;
     static float bot1Time = 300;
     static float bot2Time = 300;
@@ -46,15 +47,14 @@ public class Refree {
 
         boolean move1 = false;
         boolean move2 = false;
-        int limitDepth = 5;
         float b1 = 0f;
         float b2 = 0f;
 
         System.out.println("Initial board state:");
         printBoard();
-        
-        //while (limitDepth > 0 && bot2Time > 0 && bot1Time > 0)
-        while (limitDepth > 0) {
+
+        // while (limitDepth > 0 && bot2Time > 0 && bot1Time > 0)
+        while (true) {
 
             List<Coordinate> movesPlayer1 = generateValidMoves(O);
             if (movesPlayer1.size() > 0) {
@@ -65,7 +65,7 @@ public class Refree {
                     long start = System.nanoTime();
                     OthelloAI.main(args);
                     long end = System.nanoTime();
-                    System.out.println("Time taken by bot1: " + (double) (end - start) / 1000000000d + " seconds");
+                    System.out.println("Time taken by Bot1: " + (double) (end - start) / 1000000000d + " seconds");
                     b1 += (float) (end - start) / 1000000000f;
                     // bot1Time -= (float) (end - start) / 1000000000f;
                 } else {
@@ -73,7 +73,7 @@ public class Refree {
                     long start = System.nanoTime();
                     OthelloAI2.main(args);
                     long end = System.nanoTime();
-                    System.out.println("Time taken by bot2: " + (double) (end - start) / 1000000000d + " seconds");
+                    System.out.println("Time taken by Bot2: " + (double) (end - start) / 1000000000d + " seconds");
                     b2 += (float) (end - start) / 1000000000f;
                     // bot2Time -= (float) (end - start) / 1000000000f;
                 }
@@ -93,7 +93,7 @@ public class Refree {
                     long start = System.nanoTime();
                     OthelloAI2.main(args);
                     long end = System.nanoTime();
-                    System.out.println("Time taken by bot2: " + (double) (end - start) / 1000000000d + " seconds");
+                    System.out.println("Time taken by Bot2: " + (double) (end - start) / 1000000000d + " seconds");
                     b2 += (float) (end - start) / 1000000000f;
                     // bot2Time -= (float) (end - start) / 1000000000f;
                 } else {
@@ -101,7 +101,7 @@ public class Refree {
                     long start = System.nanoTime();
                     OthelloAI.main(args);
                     long end = System.nanoTime();
-                    System.out.println("Time taken by bot1: " + (double) (end - start) / 1000000000d + " seconds");
+                    System.out.println("Time taken by Bot1: " + (double) (end - start) / 1000000000d + " seconds");
                     b1 += (float) (end - start) / 1000000000f;
                     // bot1Time -= (float) (end - start) / 1000000000f;
                 }
@@ -119,8 +119,7 @@ public class Refree {
 
             move1 = false;
             move2 = false;
-            System.out.println("Total Time bot1: " + b1 + " bot2: " + b2);
-            // limitDepth--;
+            System.out.println("Total Time taken by Bot1: " + b1 + "s Bot2: " + b2 + "s");
         }
 
         declareWinner();
@@ -141,16 +140,16 @@ public class Refree {
             System.out.println("Its a draw! X: " + countX + " O: " + countO);
         else if (countX > countO) {
             if (!flipPieces) {
-                System.out.println("bot2 Won!");
+                System.out.println("Bot2 Won!");
             } else {
-                System.out.println("bot1 Won!");
+                System.out.println("Bot1 Won!");
             }
             System.out.println("X is the winner by X: " + countX + " O: " + countO);
         } else if (countX < countO) {
             if (!flipPieces) {
-                System.out.println("bot1 Won!");
+                System.out.println("Bot1 Won!");
             } else {
-                System.out.println("bot2 Won!");
+                System.out.println("Bot2 Won!");
             }
             System.out.println("O is the winner by O: " + countO + " X: " + countX);
         }
@@ -183,7 +182,7 @@ public class Refree {
             int l = j + direction[m][1];
             int countOpponent = 0;
             while (k >= 0 && k < 12 && l >= 0 && l < 12 && board[k][l] != 0) {
-                if (board[k][l] == opponentColor(playerColor)) {
+                if (board[k][l] == Utility.opponentColor((byte) playerColor)) {
                     countOpponent++;
                 } else if (board[k][l] == playerColor) {
                     if (countOpponent > 0)
@@ -259,8 +258,6 @@ public class Refree {
 
             int y = first - 'a';
             int x = Integer.parseInt(second) - 1;
-
-            System.out.println("Player chose move: " + x + "," + y);
             for (Coordinate c : movesList) {
                 if (c.first == x && c.second == y) {
                     // Found Valid Move
@@ -289,7 +286,7 @@ public class Refree {
         for (int m = 0; m < direction.length; m++) {
             int k = i + direction[m][0];
             int l = j + direction[m][1];
-            while (k >= 0 && k < 12 && l >= 0 && l < 12 && board[k][l] == opponentColor(playerColor)) {
+            while (k >= 0 && k < 12 && l >= 0 && l < 12 && board[k][l] == Utility.opponentColor((byte) playerColor)) {
                 k += direction[m][0];
                 l += direction[m][1];
             }
@@ -297,7 +294,7 @@ public class Refree {
                 // Found a black on border, need to flip opponent pieces till that position
                 k = i + direction[m][0];
                 l = j + direction[m][1];
-                while (board[k][l] == opponentColor(playerColor)) {
+                while (board[k][l] == Utility.opponentColor((byte) playerColor)) {
                     board[k][l] = playerColor;
                     k += direction[m][0];
                     l += direction[m][1];
@@ -306,15 +303,18 @@ public class Refree {
         }
     }
 
-    public static int opponentColor(int playerColor) {
-        if (playerColor == O) {
-            return X;
-        }
-        return O;
-    }
-
     public static void printBoard() {
+        System.out.println();
+        System.out.print("  ");
+        for (char i = 0; i < 12; i++) {
+            System.out.print(" "+(char) ('a' + i));
+        }
+        System.out.println();
         for (int m = 0; m < 12; m++) {
+            if (m + 1 < 10)
+                System.out.print(m + 1+"  ");
+            else
+                System.out.print(m + 1+" ");
             for (int n = 0; n < 12; n++) {
                 if (board[m][n] == 0)
                     System.out.print(". ");
@@ -326,5 +326,6 @@ public class Refree {
             }
             System.out.println();
         }
+        System.out.println();
     }
 }

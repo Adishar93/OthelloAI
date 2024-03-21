@@ -71,26 +71,6 @@ public class OthelloAI {
             e.printStackTrace(System.out);
         }
     }
-
-    public static byte[][] copy2darray(byte[][] input) {
-        byte[][] copy = new byte[input.length][];
-        for (byte i = 0; i < input.length; i++) {
-            byte[] inputRow = input[i];
-            int rowLen = inputRow.length;
-            copy[i] = new byte[rowLen];
-            System.arraycopy(inputRow, 0, copy[i], 0, rowLen);
-        }
-        return copy;
-    }
-
-    public static byte opponentColor(byte playerColor) {
-        switch (playerColor) {
-            case 1:
-                return 2;
-            default:
-                return 1;
-        }
-    }
 }
 
 class MM {
@@ -115,7 +95,7 @@ class MM {
         // }
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            int childUtility = miniMax(newBoard, OthelloAI.opponentColor(playerColor), alpha, beta,
+            int childUtility = miniMax(newBoard, Utility.opponentColor(playerColor), alpha, beta,
                     (byte) (depth - 1), false);
 
             if (childUtility > bestChildUtility) {
@@ -134,20 +114,20 @@ class MM {
     public static int miniMax(Board b, byte playerColor, int alpha, int beta, byte depth,
             boolean maximizingPlayer) {
         if (depth == 0) {
-            return b.utilityCornerEvaluation(OthelloAI.globalPlayerColor)
-                    + b.utilityFrontierDiscs(OthelloAI.globalPlayerColor)
-                    + b.utilityCornerCloseness(OthelloAI.globalPlayerColor);
+            return HeuristicEvaluators.utilityCornerEvaluation(b, OthelloAI.globalPlayerColor)
+                    + HeuristicEvaluators.utilityFrontierDiscs(b, OthelloAI.globalPlayerColor)
+                    + HeuristicEvaluators.utilityCornerCloseness(b, OthelloAI.globalPlayerColor);
 
         }
         List<Coordinate> children = b.generateValidMoves(playerColor);
         if (children.size() == 0) {
-            if (b.generateValidMoves(OthelloAI.opponentColor(playerColor)).size() == 0) {
+            if (b.generateValidMoves(Utility.opponentColor(playerColor)).size() == 0) {
                 // Terminal state reached before depth end, so change heuristic to count
-                return b.utilityCountPieces(OthelloAI.globalPlayerColor);
+                return HeuristicEvaluators.utilityCountPieces(b, OthelloAI.globalPlayerColor);
             }
-            return b.utilityCornerEvaluation(OthelloAI.globalPlayerColor)
-                    + b.utilityFrontierDiscs(OthelloAI.globalPlayerColor)
-                    + b.utilityCornerCloseness(OthelloAI.globalPlayerColor);
+            return HeuristicEvaluators.utilityCornerEvaluation(b, OthelloAI.globalPlayerColor)
+                    + HeuristicEvaluators.utilityFrontierDiscs(b, OthelloAI.globalPlayerColor)
+                    + HeuristicEvaluators.utilityCornerCloseness(b, OthelloAI.globalPlayerColor);
         }
 
         // if (sort) {
@@ -170,7 +150,7 @@ class MM {
 
         for (Coordinate c : children) {
             Board newBoard = b.playMoveGetNewBoard(c.first, c.second, playerColor);
-            int childUtility = miniMax(newBoard, OthelloAI.opponentColor(playerColor), alpha, beta,
+            int childUtility = miniMax(newBoard, Utility.opponentColor(playerColor), alpha, beta,
                     (byte) (depth - 1), !maximizingPlayer);
             if (maximizingPlayer) {
                 if (childUtility > bestChildUtility) {
