@@ -13,7 +13,7 @@ In this project, I developed an Othello AI bot based on the Min-Max algorithm wi
 
 ### Approach
 
-Implemented Mini-Max algorithm with Alpha–beta pruning pruning from scratch.
+Implemented Mini-Max algorithm with Alpha–beta pruning from scratch.
 
 1. **Focus on Heuristic Tuning:**
    - Created a referee within this repository to monitor matches between different versions of the AI bot with varying heuristics and depths.
