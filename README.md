@@ -13,17 +13,19 @@ In this project, I developed an Othello AI bot based on the Min-Max algorithm wi
 
 ### Approach
 
+Implemented Mini-Max algorithm with Alpha–beta pruning pruning from scratch.
+
 1. **Focus on Heuristic Tuning:**
    - Created a referee within this repository to monitor matches between different versions of the AI bot with varying heuristics and depths.
    - Determined the best heuristics through rigorous testing to ensure fast performance and high victory rates.
 
 2. **Conditional Heuristics:**
-   - Implemented conditional heuristics based on the current game state.
-   - Applied different heuristics only on terminal states, optimizing the bot's decision-making process.
+   - Implemented conditional heuristics based on the board state inside the mini-max tree.
+   - Specialized heuristics are applied exclusively to terminal states in order to address unique game conditions, such as the significance of piece count, which may not be relevant during intermediate stages.
 
 3. **Increase Depth:**
-   - Enhanced the bot's depth search algorithm to maximize performance within the time limit.
-   - Implemented sorting techniques and optimized board traversal to increase depth levels without compromising on time efficiency.
+   - Enhanced the bot's performance to increase search depth within time limit.
+   - Implemented sorting techniques and traversal ordering techniques to improve Alpha-beta pruning and consequently increase depth levels without compromising on time efficiency.
 
 ## Project Structure
 
