@@ -11,6 +11,11 @@ In this project, I developed an Othello AI bot based on the Mini-Max algorithm w
 - Ranked 1st in a class of 216 students in the CSCI 561 course competition.
 - Developed an efficient AI bot capable of competing against diverse strategies within a time limit of 300 seconds per bot for all available moves.
 
+## Demo Video
+
+https://github.com/Adishar93/OthelloAI/assets/39119745/bc7842e7-0b82-4f15-8777-cb41c8acaea1
+
+
 ### Approach
 
 Implemented Mini-Max algorithm with Alpha–beta pruning from scratch.
@@ -33,14 +38,6 @@ Implemented Mini-Max algorithm with Alpha–beta pruning from scratch.
 - `match/`: Includes the referee program used to monitor matches between AI bots.
 - `match/bot1/`: Includes bot1 code run by refree
 - `match/bot2`: Includes bot2 code run by refree
-
-## Demo Video
-
-
-https://github.com/Adishar93/OthelloAI/assets/39119745/bc7842e7-0b82-4f15-8777-cb41c8acaea1
-
-
-
 
 ## Getting Started
 
