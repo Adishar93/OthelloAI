@@ -66,6 +66,7 @@ public class Refree {
                     OthelloAI.main(args);
                     long end = System.nanoTime();
                     System.out.println("Time taken by Bot1: " + (double) (end - start) / 1000000000d + " seconds");
+                    System.out.println("Bot1 played a move ->");
                     b1 += (float) (end - start) / 1000000000f;
                     // bot1Time -= (float) (end - start) / 1000000000f;
                 } else {
@@ -74,6 +75,7 @@ public class Refree {
                     OthelloAI2.main(args);
                     long end = System.nanoTime();
                     System.out.println("Time taken by Bot2: " + (double) (end - start) / 1000000000d + " seconds");
+                    System.out.println("Bot2 played a move ->");
                     b2 += (float) (end - start) / 1000000000f;
                     // bot2Time -= (float) (end - start) / 1000000000f;
                 }
@@ -94,6 +96,7 @@ public class Refree {
                     OthelloAI2.main(args);
                     long end = System.nanoTime();
                     System.out.println("Time taken by Bot2: " + (double) (end - start) / 1000000000d + " seconds");
+                    System.out.println("Bot2 played a move ->");
                     b2 += (float) (end - start) / 1000000000f;
                     // bot2Time -= (float) (end - start) / 1000000000f;
                 } else {
@@ -102,6 +105,7 @@ public class Refree {
                     OthelloAI.main(args);
                     long end = System.nanoTime();
                     System.out.println("Time taken by Bot1: " + (double) (end - start) / 1000000000d + " seconds");
+                    System.out.println("Bot1 played a move ->");
                     b1 += (float) (end - start) / 1000000000f;
                     // bot1Time -= (float) (end - start) / 1000000000f;
                 }
@@ -250,11 +254,11 @@ public class Refree {
             char first = move.charAt(0);
             String second = move.substring(1);
             if (playerColor == 1) {
-                System.out.print(" O ");
+                System.out.print("O ");
             } else {
-                System.out.print(" X ");
+                System.out.print("X ");
             }
-            System.out.println("Player chose move1: " + first + "," + second);
+            System.out.println("chose move: " + first + "," + second);
 
             int y = first - 'a';
             int x = Integer.parseInt(second) - 1;

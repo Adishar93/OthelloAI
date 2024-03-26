@@ -52,8 +52,8 @@ public class OthelloAI {
                 // result = b.generateValidMoves(playerColor).get(0);
                 // }
                 result = MM.alphaBetaSearch(b, playerColor, Integer.MIN_VALUE,
-                        Integer.MAX_VALUE, (byte) 9);
-                System.out.println("Nodes visited bot1: " + MM.nodesVisited);
+                        Integer.MAX_VALUE, (byte) 8);
+                System.out.println("Nodes visited Bot1: " + MM.nodesVisited);
             }
         } catch (Exception e) {
             System.out.println("Error Reading Input");
