@@ -13,6 +13,7 @@ cd ..
 cp Refree.java ./build
 cd build
 javac *
+rm *.java
 PAUSE
 java Refree
 PAUSE
