@@ -37,6 +37,10 @@ Implemented Mini-Max algorithm with Alpha–beta pruning from scratch.
 ## Demo Video
 
 
+https://github.com/Adishar93/OthelloAI/assets/39119745/bc7842e7-0b82-4f15-8777-cb41c8acaea1
+
+
+
 
 ## Getting Started
 
