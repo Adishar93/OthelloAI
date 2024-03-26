@@ -4,7 +4,7 @@ Welcome to the repository for the Othello 12x12 AI bot, developed as a project f
 
 ## About the Project
 
-In this project, I developed an Othello AI bot based on the Min-Max algorithm with Alpha-Beta pruning. The goal was to create an intelligent bot capable of making strategic moves to outperform opponents within a limited time frame.
+In this project, I developed an Othello AI bot based on the Mini-Max algorithm with Alpha-Beta pruning. The goal was to create an intelligent bot capable of making strategic moves to outperform opponents within a limited time frame.
 
 ### Achievements
 
