@@ -1,6 +1,6 @@
 # Othello 12x12 AI Bot
 
-Welcome to the repository for the Othello 12x12 AI bot, developed as a project for the CSCI 561 Foundations of Artificial Intelligence Course at USC. This project achieved the 1st rank among a class of 216 students in the course competition, showcasing exceptional performance.
+Welcome to the repository for the Othello 12x12 AI bot, developed as a project for the CSCI 561 Foundations of Artificial Intelligence Course at USC. This project **achieved the 1st rank among a class of 216 students** in the course competition between the bots, showcasing exceptional performance.
 
 ## About the Project
 
